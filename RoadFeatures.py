@@ -10,6 +10,7 @@ class Road:
         self.line = line
         self.lane1 = lane1
         self.lane2 = lane2
+        self.isDrawable = True
 
     def getNumVehicles(self):
         return len(self.lane1.vehicles+self.lane2.vehicles)
@@ -39,6 +40,21 @@ class Lane:
         if len(self.vehicles)>0: return self.vehicles[-1]
         else: return False
         
+class Anchor:
+    def __init__(self, name, screen, x=0, y=0, color=purple, width=2, height=2):
+        self.name = name
+        self.x = x
+        self.y = y
+        self.screen = screen
+        self.color = color
+        self.width = width
+        self.height = height
+        self.isDrawable = True
+
+    def draw(self):
+        pygame.draw.rect(self.screen, self.color, (self.x-(self.width/2), self.y-(self.height/2), self.width, self.height), 0)
+
+
 
 class Entrance:
     def __init__(self, name, screen, poleStack=[], x=0, y=0, width=5, height=5, color=green):
@@ -50,6 +66,7 @@ class Entrance:
         self.width = width
         self.height = height
         self.color = color
+        self.isDrawable = True
 
     def draw(self):
         pygame.draw.rect(self.screen, self.color, (self.x, self.y-(self.width/2), self.width, self.height), 0)
@@ -63,6 +80,7 @@ class Exit:
         self.width = width
         self.height = height
         self.color = color
+        self.isDrawable = True
 
     def draw(self):
         pygame.draw.rect(self.screen, self.color, (self.x, self.y-(self.width/2), self.width, self.height), 0)
@@ -82,6 +100,7 @@ class LightPole:
         self.width = width
         self.height = height
         self.color = color
+        self.isDrawable = True
 
 
     def draw(self):
@@ -105,10 +124,8 @@ class Light:
         self.state = state
         self.diameter = diameter
         self.radius = diameter/2
-
-        #default color is purple, this indicates
-        #that something is wrong
         self.color = purple
+        self.isDrawable = True
 
         if self.state == "go":self.color = green
         elif self.state == "stop":self.color = red
