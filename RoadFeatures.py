@@ -110,8 +110,8 @@ class LightPole:
         #pygame.draw.rect(self.screen, self.color, (self.x,self.y,self.width,self.height))
         #draw the lights
         if self.id%2 == 1:
-            pygame.draw.circle(self.screen, self.light1.color, (int(self.x+20),int(self.y+self.light1.diameter+1)), self.light1.diameter)
-            pygame.draw.circle(self.screen, self.light2.color, (int(self.x+60),int(self.y+self.light2.diameter+1)), self.light2.diameter)
+            pygame.draw.circle(self.screen, self.light1.color, (int(self.x+self.light1.diameter-3),int(self.y)), self.light1.diameter)
+            pygame.draw.circle(self.screen, self.light2.color, (int(self.x+self.light1.diameter+7),int(self.y)), self.light2.diameter)
         elif self.id%2 == 0:
             pygame.draw.circle(self.screen, self.light1.color, (int(self.x+self.light1.diameter+1),int(self.y-5)), self.light1.diameter)
             pygame.draw.circle(self.screen, self.light2.color, (int(self.x+self.light2.diameter+1),int(self.y+5)), self.light2.diameter)

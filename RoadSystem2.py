@@ -17,6 +17,7 @@ class RoadSystem2:
         
         self.roadLen = (self.getStringBetween(self.fstr,'START:\n','\nEND:\n').split('\n')[0]).count('<')
         self.roadStrings = self.getStringBetween(self.fstr,'START:\n','\nEND:\n').split('\n')
+        #set this to a constant for unscaled graphics
         self.segmentSize = (width/self.roadLen)
         RoadSystem2.roadGap = self.segmentSize*3
 
@@ -62,13 +63,20 @@ class RoadSystem2:
                     roadLen = rdstr.count('>')
                     splt = '>'
                 for j, elem in enumerate(rdstr.split(splt)):
-                    #********************************************************
                     if 'En' in elem:
                         self.features[elem].x, self.features[elem].y = ((xCoord+(i*RoadSystem2.roadGap)-(RoadSystem2.roadGap/2)-(self.features[elem].width/2)), ((self.height/2)-((roadLen/2)*self.segmentSize)+(j*self.segmentSize)+self.roadGap))
                         self.features[elem].width, self.features[elem].height = self.segmentSize, self.segmentSize
                     elif 'Ex' in elem:
                         self.features[elem].x, self.features[elem].y = ((xCoord+(i*RoadSystem2.roadGap)-(RoadSystem2.roadGap/2)-(self.features[elem].width/2)), ((self.height/2)-((roadLen/2)*self.segmentSize)+(j*self.segmentSize)+self.roadGap))
                         self.features[elem].width, self.features[elem].height = self.segmentSize, self.segmentSize
+                    #********************************************************
+                    elif 'Po' in elem:
+                        if splt == '<':
+                            self.features[elem].x, self.features[elem].y = ((xCoord+(i*RoadSystem2.roadGap)-(RoadSystem2.roadGap/2)-(self.features[elem].width/2)), ((self.height/2)-((i*RoadSystem2.roadGap)*2)+self.roadGap*2)-self.segmentSize)
+                            self.features[elem].width, self.features[elem].height = self.segmentSize*2, self.segmentSize
+                        elif splt == '>':
+                            self.features[elem].x, self.features[elem].y = ((xCoord+(i*RoadSystem2.roadGap)-(RoadSystem2.roadGap/2)-(self.features[elem].width/2)), ((self.height/2)-((i*RoadSystem2.roadGap)*2)+self.roadGap*2)+self.segmentSize)
+                            self.features[elem].width, self.features[elem].height = self.segmentSize*2, self.segmentSize
                 self.features["SR"+str(num+1)+str(i)] = Road("SideRoad"+str(num+1), id, self.screen, [(xCoord+(i*RoadSystem2.roadGap)-(RoadSystem2.roadGap/2),yCoord-((roadLen/2)*self.segmentSize)) , (xCoord+(i*RoadSystem2.roadGap)-(RoadSystem2.roadGap/2), yCoord+((roadLen/2))*self.segmentSize)], Lane(1), Lane(2))
 
 
@@ -130,12 +138,13 @@ class RoadSystem2:
             splt = '>' if '>' in rdstr else '<'
             for j, elem in enumerate(rdstr.split(splt)):
                 if 'Po' in elem:
-                    if splt == '<':
-                        self.features[elem].x, self.features[elem].y = ((j*self.segmentSize)+self.segmentSize*2), ((self.height/2)+(i*RoadSystem2.roadGap))
-                        self.features[elem].width, self.features[elem].height = self.segmentSize, self.segmentSize*2
-                    elif splt == '>':
+                    if self.features[elem].id == 2:
                         self.features[elem].x, self.features[elem].y = ((j*self.segmentSize)+(RoadSystem2.roadGap*2)+self.segmentSize), ((self.height/2)+(i*RoadSystem2.roadGap))
                         self.features[elem].width, self.features[elem].height = self.segmentSize, self.segmentSize*2
+                    elif self.features[elem].id == 4:
+                        self.features[elem].x, self.features[elem].y = ((j*self.segmentSize)+self.segmentSize*2), ((self.height/2)+(i*RoadSystem2.roadGap))
+                        self.features[elem].width, self.features[elem].height = self.segmentSize, self.segmentSize*2
+
 
 
     def draw(self):

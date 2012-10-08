@@ -1,0 +1,7 @@
+TODO:
+
+implement light size scaling. lights are currently the same size no matter what the segment size is
+
+light poles with ID 1 and 3 do not center properly on the roads, fix that
+
+entrances with ID 1 and 3 also do not center properly
