@@ -69,7 +69,7 @@ class Entrance:
         self.isDrawable = True
 
     def draw(self):
-        pygame.draw.rect(self.screen, self.color, (self.x, self.y-(self.width/2), self.width, self.height), 0)
+        pygame.draw.rect(self.screen, self.color, (self.x-(self.height/2), self.y-(self.width/2), self.width, self.height), 0)
 
 class Exit:
     def __init__(self, name, screen, x=0, y=0, width=5, height=5, color=red):
@@ -83,13 +83,13 @@ class Exit:
         self.isDrawable = True
 
     def draw(self):
-        pygame.draw.rect(self.screen, self.color, (self.x, self.y-(self.width/2), self.width, self.height), 0)
+        pygame.draw.rect(self.screen, self.color, (self.x-(self.height/2), self.y-(self.width/2), self.width, self.height), 0)
 
 
 
 class LightPole:
 
-    def __init__(self, name, id, screen, light1, light2, x=0, y=0, width=5, height=5, color=light_grey):
+    def __init__(self, name, id, screen, light1, light2, x=0, y=0, width=5, height=5, color=black):
         self.name = name
         self.id = int(id)
         self.screen = screen
@@ -110,11 +110,11 @@ class LightPole:
         #pygame.draw.rect(self.screen, self.color, (self.x,self.y,self.width,self.height))
         #draw the lights
         if self.id%2 == 1:
-            pygame.draw.circle(self.screen, self.light1.color, (int(self.x+self.light1.diameter-3),int(self.y)), self.light1.diameter)
-            pygame.draw.circle(self.screen, self.light2.color, (int(self.x+self.light1.diameter+7),int(self.y)), self.light2.diameter)
+            pygame.draw.circle(self.screen, self.light1.color, (int(self.x+self.light1.diameter+(self.height/4)+2),int(self.y)), int(self.height/2))
+            pygame.draw.circle(self.screen, self.light2.color, (int(self.x+self.light1.diameter+(self.height)+6),int(self.y)), int(self.height/2))
         elif self.id%2 == 0:
-            pygame.draw.circle(self.screen, self.light1.color, (int(self.x+self.light1.diameter+1),int(self.y-5)), self.light1.diameter)
-            pygame.draw.circle(self.screen, self.light2.color, (int(self.x+self.light2.diameter+1),int(self.y+5)), self.light2.diameter)
+            pygame.draw.circle(self.screen, self.light1.color, (int(self.x+self.light1.diameter+(self.width/4)+2),int(self.y-(self.width/2))), int(self.width/2))
+            pygame.draw.circle(self.screen, self.light2.color, (int(self.x+self.light2.diameter+(self.width/4)+2),int(self.y+(self.width/2))), int(self.width/2))
 
 
 class Light:
