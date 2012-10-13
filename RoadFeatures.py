@@ -54,6 +54,13 @@ class Anchor:
     def draw(self):
         pygame.draw.rect(self.screen, self.color, (self.x-(self.width/2), self.y-(self.height/2), self.width, self.height), 0)
 
+class Intersection:
+    def __init__(self, name, anchor, poles):
+        self.name = name
+        self.x, self.y = anchor.x, anchor.y
+        self.poles = poles
+        self.isDrawable = False
+
 
 
 class Entrance:
@@ -102,12 +109,16 @@ class LightPole:
         self.color = color
         self.isDrawable = True
 
+    #returns the intersection that contains this lightpole
+    def getParent(self, intersections):
+        for inter in intersections:
+            for pole in inter.poles:
+                if self.name == pole.name: return inter
+        return None
 
     def draw(self):
+        #draw pole
         pygame.draw.rect(self.screen, self.color, (self.x, self.y-(self.height/2), self.width, self.height), 0)
-
-        #draw the pole
-        #pygame.draw.rect(self.screen, self.color, (self.x,self.y,self.width,self.height))
         #draw the lights
         if self.id%2 == 1:
             pygame.draw.circle(self.screen, self.light1.color, (int(self.x+self.light1.diameter+(self.height/4)+2),int(self.y)), int(self.height/2))

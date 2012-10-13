@@ -6,8 +6,8 @@ This config file allows for easy changing of system variables
 size = width, height = 1280, 720
 
 #positioning variables
-middleX = width/2
-middleY = height/2
+middleX = int(width/2)
+middleY = int(height/2)
 
 #framerate of the simulation. The screen will refresh this
 #many times per second

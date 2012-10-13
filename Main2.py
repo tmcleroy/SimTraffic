@@ -12,6 +12,24 @@ pygame.init()
 #will be drawn
 screen = pygame.display.set_mode(size)
 
+
+
+
+
+
+
+"""
+def spawnCar(rs, carList, ename):
+    c = Vehicle(screen,rs.features[ename].x,rs.features[ename].y,20,10,'car.png',rs.features['R2'],rs.features['R2'].lane1,rs.features['PA3'],rs.features['PA3'].light1,'forward',rs.features['R2'].lane1.getLastVehicle())
+    rs.features['R2'].lane1.vehicles.append(c)
+    carList.append(c)
+"""
+
+
+
+
+
+
 #initialize the clock instance which allows framerate regulation
 Clock = pygame.time.Clock()
 
@@ -67,6 +85,9 @@ while True:
             elif event.key == pygame.K_2:
                 print('asdf')
 
+    pygame.draw.circle(screen, purple, (middleX, middleY), 10)
+
+    
     
     #display the FPS (Frames Per Second) and info text
     screen.blit(fpsLabel, (0,0))

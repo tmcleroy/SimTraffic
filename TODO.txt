@@ -1,5 +1,5 @@
 TODO:
 
+finsish implementing the navigation graph
 
-
-light poles and lights with ID 1 and 3 do not center properly on the roads, fix that...MOSTLY FINISHED
+lights positions on the poles don't scale properly
