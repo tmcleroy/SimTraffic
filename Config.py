@@ -2,6 +2,9 @@
 This config file allows for easy changing of system variables
 """
 
+#imports
+from pprint import pprint
+
 #dimensions of the simulation window
 size = width, height = 1280, 720
 

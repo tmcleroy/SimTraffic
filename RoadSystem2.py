@@ -21,7 +21,7 @@ class RoadSystem2:
         self.roadLen = (self.getStringBetween(self.fstr,'START:\n','\nEND:\n').split('\n')[0]).count('<')
         self.roadStrings = self.getStringBetween(self.fstr,'START:\n','\nEND:\n').split('\n')
         #set this to a constant for unscaled graphics
-        self.segmentSize = (width/self.roadLen)
+        self.segmentSize = 20#(width/self.roadLen)
         RoadSystem2.roadGap = self.segmentSize*3
 
         #must be in this order
@@ -108,18 +108,7 @@ class RoadSystem2:
             for j, elem in enumerate(rdstr.split(splt)):
                 if 'En' in elem:
                         self.features[elem].x, self.features[elem].y = ((j*self.segmentSize)+self.segmentSize), ((self.height/2)+(i*RoadSystem2.roadGap))
-                        self.features[elem].width, self.features[elem].height = self.segmentSize, self.segmentSize
-                        self.setPoleStack(elem, rdstr)
-
-                
-    def setPoleStack(self, entr, str):
-        #print (str,'\n\n\n')
-        if len(self.features[entr].poleStack) == 0:
-            splt = '>' if '>' in str else '<'
-            for e in str.split(splt):
-                if 'Po' in e: self.features[entr].poleStack.append(e)
-    
-        
+                        self.features[elem].width, self.features[elem].height = self.segmentSize, self.segmentSize    
     
 
     def setExits(self):
@@ -165,10 +154,10 @@ class RoadSystem2:
         intersectionList = [] #this is needed for the getParent method of LightPole
         for i in self.features:
             if 'En' in i or 'In' in i:
-                self.navGraph[i] = []
+                self.navGraph[self.features[i]] = []
             if 'In' in i: intersectionList.append(self.features[i])
         #populate the values for the entrance keys
-        for i, rdstr in enumerate(self.roadStrings):
+        for rdstr in self.roadStrings:
             splt = '>' if '>' in rdstr else '<'
             charList = rdstr.split(splt)
             if splt == '<': charList.reverse()
@@ -179,24 +168,68 @@ class RoadSystem2:
                     pole = self.features[elem]
                     break
             #we now have the pole connected to the entrance, we need the intersection
-            if key: self.navGraph[key] = pole.getParent(intersectionList)
+            if key: self.navGraph[self.features[key]].append(pole.getParent(intersectionList))
         #populate the values for the intersection keys
-        poleExit = {} #this is needed to map poles to their exits
+        poleDest = {} #this is needed to map a pole to its next destination
         for feature in self.features:
-            if 'Po' in feature: poleExit[feature] = None
-        
+            if 'Po' in feature: poleDest[feature] = None
+        for po in poleDest:
+            for rdstr in self.roadStrings:
+                if po in rdstr:
+                    splt = '>' if '>' in rdstr else '<'
+                    charList = rdstr.split(splt)
+                    if splt == '<' : charList.reverse()
+                    dest = None
+                    brkNext = False
+                    for elem in charList:
+                        if brkNext and ('Po' in elem or 'Ex' in elem):
+                            dest = elem
+                            break
+                        if elem == po: brkNext = True
+            poleDest[po] = dest
+        for elem in self.navGraph:
+            if 'In' in elem.name:
+                for i in range(4):
+                    dest = self.features[poleDest[self.features[elem.name].poles[i].name]]
+                    if isinstance(dest, LightPole) : dest = dest.getParent(intersectionList)
+                    self.navGraph[elem].append(dest)
+                
 
+                    
 
+    
     def draw(self):
         for feature in self.features.values():
             if feature and feature.isDrawable: feature.draw()
+
+    def setAllLights(self, state):
+        for feature in self.features.values():
+            if isinstance(feature, LightPole) : feature.setAllLights(state)
+    
+
+    #returns the shortest path from an entrance to an exit or intersection
+    def getPath(self, start, end, graph=None, path=[]):
+        graph = self.navGraph
+        path = path + [start]
+        if start == end:
+            return path
+        if not start in graph:
+            return None
+        shortest = None
+        for node in graph[start]:
+            if node not in path:
+                newpath = self.getPath(node, end, graph, path)
+                if newpath:
+                    if not shortest or len(newpath) < len(shortest):
+                        shortest = newpath
+        return shortest
       
 
 
     def getStringBetween(self,string, start='', end=''):
         return string.split(start)[1].split(end)[0]
         
-
+"""
 r = RoadSystem2('r2.txt')
 print ("RoadSystem r has been created")
-
+"""

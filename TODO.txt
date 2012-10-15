@@ -1,5 +1,7 @@
 TODO:
 
-finsish implementing the navigation graph
+implement turning
 
 lights positions on the poles don't scale properly
+
+change repo name from SimLightDowntown to just SimLight

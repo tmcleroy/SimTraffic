@@ -1,7 +1,8 @@
 import sys, pygame
 from RoadSystem2 import *
+from RoadFeatures import *
 from Config import *
-from Vehicle import *
+from Vehicle2 import *
 
 
 #initialize pygame, the game library used for visually
@@ -11,21 +12,33 @@ pygame.init()
 #initialize the screen surface onto which everything
 #will be drawn
 screen = pygame.display.set_mode(size)
+vehics=[]
+roadSystemFname = 'roadSystems/r2short.txt'
+rs = RoadSystem2(roadSystemFname, screen, width, height)
 
 
+#returns the last vehicle spawned on the given road
+def getPrevVehic(road):
+    if len(vehics) == 0 : return None
+    limit = -1*len(vehics)
+    i = -1
+    while  i >= limit:
+        if vehics[i].road.id == road.id: return vehics[i]
+        i -= 1
+    return None
+        
 
-
-
-
-
-"""
-def spawnCar(rs, carList, ename):
-    c = Vehicle(screen,rs.features[ename].x,rs.features[ename].y,20,10,'car.png',rs.features['R2'],rs.features['R2'].lane1,rs.features['PA3'],rs.features['PA3'].light1,'forward',rs.features['R2'].lane1.getLastVehicle())
-    rs.features['R2'].lane1.vehicles.append(c)
-    carList.append(c)
-"""
-
-
+#spawns a vehicle and adds it to the car list
+def spawnVehic(entrance, road, lane, exit):
+    entrance = rs.features[entrance]
+    road = rs.features[road]
+    exit = rs.features[exit]
+    frontVehic = getPrevVehic(road)
+    
+    v = Vehicle2(screen, rs, entrance, road, road.lanes[lane-1], frontVehic, exit)
+    
+    road.lanes[lane-1].vehicles.append(v)    
+    vehics.append(v)
 
 
 
@@ -40,8 +53,7 @@ Font = pygame.font.Font(None, 36)
 frameCount = 0
 secondsPassed = 0
 
-rs = RoadSystem2('r2.txt', screen, width, height)
-cars = []
+
 
 #GAME LOOP. This will run every frame (120 times per second) until the program is closed
 while True:
@@ -60,7 +72,6 @@ while True:
     frameCount += 1
     if frameCount % framerate == 0: secondsPassed += 1
 
-    
     #generates the info text labels. These must be
     #in multiple labels because the font renderer
     #cannot handle newline characters
@@ -71,21 +82,32 @@ while True:
 
     rs.draw()
 
-    for car in cars:
-        car.auto()
-        car.draw()
+    
+    for vehic in vehics:
+        vehic.auto()
+        vehic.draw()
+    
+
+    #pprint (cars)
     
     #handle keyboard input
     if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_1:
                 if frameCount%10 == 0:
-                    c = Vehicle(screen,rs.features['EA1'].x,rs.features['EA1'].y,20,10,'car.png',rs.features['R2'],rs.features['R2'].lane1,rs.features['PA3'],rs.features['PA3'].light1,'forward',rs.features['R2'].lane1.getLastVehicle())
-                    rs.features['R2'].lane1.vehicles.append(c)
-                    cars.append(c)
+                    spawnVehic(entrance='EnC1', road='SR10', lane=1, exit='ExC1')
             elif event.key == pygame.K_2:
-                print('asdf')
-
-    pygame.draw.circle(screen, purple, (middleX, middleY), 10)
+                if frameCount%10 == 0:
+                    spawnVehic(entrance='EnB1', road='R1', lane=1, exit='ExB1')
+            elif event.key == pygame.K_3:
+                if frameCount%10 == 0:
+                    spawnVehic(entrance='EnD2', road='SR21', lane=1, exit='ExD2')
+            elif event.key == pygame.K_4:
+                if frameCount%10 == 0:
+                    spawnVehic(entrance='EnA1', road='R3', lane=1, exit='ExA1')
+            elif event.key == pygame.K_0:
+                rs.setAllLights("go")
+            elif event.key == pygame.K_9:
+                rs.setAllLights("stop")
 
     
     
