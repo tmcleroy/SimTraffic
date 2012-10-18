@@ -74,8 +74,9 @@ class Intersection:
         return "Intersection Object: "+self.name
 
 class Entrance:
-    def __init__(self, name, screen, poleStack=[], x=0, y=0, width=5, height=5, color=green):
+    def __init__(self, name, screen, poleStack=[], x=0, y=0, width=5, height=5, color=green, id=0):
         self.name = name
+        self.id = id
         self.screen = screen
         self.poleStack = poleStack
         self.x = x
@@ -92,8 +93,9 @@ class Entrance:
         pygame.draw.rect(self.screen, self.color, (self.x-(self.height/2), self.y-(self.width/2), self.width, self.height), 0)
 
 class Exit:
-    def __init__(self, name, screen, x=0, y=0, width=5, height=5, color=red):
+    def __init__(self, name, screen, x=0, y=0, width=5, height=5, color=red, id=0):
         self.name = name
+        self.id = id
         self.screen = screen
         self.x = x
         self.y = y

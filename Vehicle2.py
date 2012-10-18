@@ -27,7 +27,6 @@ killDistance = 100
 
 class Vehicle2:
 
-    
     #CONSTRUCTOR
     def __init__(self, screen, roadSystem, entrance, road, lane, nextVehic, exit):
         self.screen = screen
@@ -38,7 +37,7 @@ class Vehicle2:
         self.path = self.roadSystem.getPath(entrance,exit)
         self.direction = "forward"
         self.image = 'car.png'
-        self.setPoleAndLight()
+        self.setNextDestAndLight()
 
         #these parameters control the physics of the car
         self.speed = baseSpeed
@@ -94,7 +93,6 @@ class Vehicle2:
             if self.lane.id == 2: self.x,self.y = entrance.x,entrance.y+roadSystem.segmentSize
         
 
-
         
     #this is the decision making method that asks questions of the other methods
     #and decides to move forward, brake, or remove itself from the vehicle list
@@ -108,14 +106,28 @@ class Vehicle2:
         #get a new pole and light if we pass the current one
         if self.isPastLine() and len(self.path) >= 1:
             x = self.path.pop(0)
-            self.setPoleAndLight(andPoleStop=True)
-            print ('popped: ',x)
+            self.setNextDestAndLight(andPoleStop=True)
         #accelerate if possible
         if self.canGo():
             self.move("forward")
         elif not self.canGo():
             self.move("brake")
 
+    """
+    def changeDir(self):
+        if self.angle == up:
+            self.angle = right
+            return
+        elif self.angle == right:
+            self.angle = down
+            return
+        elif self.angle == down:
+            self.angle = left
+            return
+        elif self.angle == left:
+            self.angle = up
+            return
+    """
 
 
     #this method draws the vehicle to the screen
@@ -340,7 +352,7 @@ class Vehicle2:
                     return True
         return False
 
-    def setPoleAndLight(self, andPoleStop=False):
+    def setNextDestAndLight(self, andPoleStop=False):
         for elem in self.path:
             if isinstance(elem, Intersection):
                 self.pole = elem.poles[self.road.id-1]
@@ -353,8 +365,55 @@ class Vehicle2:
                 break
         return
 
-        
+    def turn(self, id):
+        #road specific assignments
+        if id==1:
+            self.length,self.width = int(self.roadSystem.segmentSize/2),int(self.roadSystem.segmentSize)
+            self.vehicSpace = self.width
+            self.angle = down
+            self.setNextDestAndLight()
+            rawImg = pygame.image.load(self.image)
+            self.image = pygame.transform.smoothscale(rawImg,(self.length,self.width))
+            self.rect = self.image.get_rect()
+        elif id==2:
+            self.length,self.width = int(self.roadSystem.segmentSize),int(self.roadSystem.segmentSize/2)
+            self.vehicSpace = self.length/2
+            self.angle = left
+            self.setNextDestAndLight()
+            rawImg = pygame.transform.rotate(pygame.image.load(self.image),270)
+            self.image = pygame.transform.smoothscale(rawImg,(self.length,self.width))
+            self.rect = self.image.get_rect()
+        elif id==3:
+            self.length,self.width = int(self.roadSystem.segmentSize/2),int(self.roadSystem.segmentSize)
+            self.vehicSpace = self.width
+            self.angle = up
+            self.setNextDestAndLight()
+            rawImg = pygame.transform.flip(pygame.image.load(self.image), False, True)
+            self.image = pygame.transform.smoothscale(rawImg,(self.length,self.width))
+            self.rect = self.image.get_rect()
+        elif id==4:
+            self.length,self.width = int(self.roadSystem.segmentSize),int(self.roadSystem.segmentSize/2)
+            self.vehicSpace = self.length
+            self.angle = right
+            self.setNextDestAndLight()
+            rawImg = pygame.transform.rotate(pygame.image.load(self.image),90)
+            self.image = pygame.transform.smoothscale(rawImg,(self.length,self.width))
+            self.rect = self.image.get_rect()
 
-    #a utility method for visually marking areas of the screen
-    def showCircle(self, screen, color, circle, radius):
-        pygame.draw.circle(screen, color, circle, radius)
+
+    #preserved methods
+    """
+    def setNextDestAndLight(self, andPoleStop=False):
+        for elem in self.path:
+            if isinstance(elem, Intersection):
+                self.pole = elem.poles[self.road.id-1]
+                self.light = self.pole.lights[self.lane.id-1]
+                if andPoleStop:
+                    if self.road.id==1 : self.poleStop = self.pole.y-(self.roadSystem.roadGap*2)-(2*self.width)
+                    elif self.road.id==2 : self.poleStop = self.pole.x+(self.roadSystem.roadGap*1.2)+self.length
+                    elif self.road.id==3 : self.poleStop = self.pole.y+(self.roadSystem.roadGap*2)+(self.width)
+                    elif self.road.id==4 : self.poleStop = self.pole.x-(self.roadSystem.roadGap*1.2)-self.length
+                break
+        return
+    """
+        

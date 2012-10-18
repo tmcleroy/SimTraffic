@@ -13,7 +13,7 @@ pygame.init()
 #will be drawn
 screen = pygame.display.set_mode(size)
 vehics=[]
-roadSystemFname = 'roadSystems/r2short.txt'
+roadSystemFname = 'roadSystems/r2.txt'
 rs = RoadSystem2(roadSystemFname, screen, width, height)
 
 
@@ -108,8 +108,10 @@ while True:
                 rs.setAllLights("go")
             elif event.key == pygame.K_9:
                 rs.setAllLights("stop")
-
-    
+            elif event.key == pygame.K_l:
+                if frameCount%10 == 0:
+                    for vehic in vehics:
+                        vehic.changeDir()
     
     #display the FPS (Frames Per Second) and info text
     screen.blit(fpsLabel, (0,0))

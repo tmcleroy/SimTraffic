@@ -21,7 +21,7 @@ class RoadSystem2:
         self.roadLen = (self.getStringBetween(self.fstr,'START:\n','\nEND:\n').split('\n')[0]).count('<')
         self.roadStrings = self.getStringBetween(self.fstr,'START:\n','\nEND:\n').split('\n')
         #set this to a constant for unscaled graphics
-        self.segmentSize = 20#(width/self.roadLen)
+        self.segmentSize = (width/self.roadLen)
         RoadSystem2.roadGap = self.segmentSize*3
 
         #must be in this order
@@ -72,9 +72,11 @@ class RoadSystem2:
                     if 'En' in elem:
                         self.features[elem].x, self.features[elem].y = ((xCoord+(i*RoadSystem2.roadGap)-(RoadSystem2.roadGap/2)), ((self.height/2)-((roadLen/2)*self.segmentSize)+(j*self.segmentSize)+self.roadGap))
                         self.features[elem].width, self.features[elem].height = self.segmentSize, self.segmentSize
+                        self.features[elem].id = id
                     elif 'Ex' in elem:
                         self.features[elem].x, self.features[elem].y = ((xCoord+(i*RoadSystem2.roadGap)-(RoadSystem2.roadGap/2)), ((self.height/2)-((roadLen/2)*self.segmentSize)+(j*self.segmentSize)+self.roadGap))
                         self.features[elem].width, self.features[elem].height = self.segmentSize, self.segmentSize
+                        self.features[elem].id = id
                     #********************************************************
                     elif 'Po' in elem:
                         if splt == '<':
@@ -108,7 +110,8 @@ class RoadSystem2:
             for j, elem in enumerate(rdstr.split(splt)):
                 if 'En' in elem:
                         self.features[elem].x, self.features[elem].y = ((j*self.segmentSize)+self.segmentSize), ((self.height/2)+(i*RoadSystem2.roadGap))
-                        self.features[elem].width, self.features[elem].height = self.segmentSize, self.segmentSize    
+                        self.features[elem].width, self.features[elem].height = self.segmentSize, self.segmentSize
+                        self.features[elem].id = 2 if splt == '<' else 4
     
 
     def setExits(self):
@@ -122,6 +125,7 @@ class RoadSystem2:
                 if 'Ex' in elem:
                         self.features[elem].x, self.features[elem].y = ((j*self.segmentSize)+self.segmentSize), ((self.height/2)+(i*RoadSystem2.roadGap))
                         self.features[elem].width, self.features[elem].height = self.segmentSize, self.segmentSize
+                        self.features[elem].id = 2 if splt == '<' else 4
 
 
     def setLightPoles(self):
@@ -229,7 +233,7 @@ class RoadSystem2:
     def getStringBetween(self,string, start='', end=''):
         return string.split(start)[1].split(end)[0]
         
-"""
-r = RoadSystem2('r2.txt')
+
+r = RoadSystem2('roadSystems/r2.txt')
 print ("RoadSystem r has been created")
-"""
+
