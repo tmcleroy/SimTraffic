@@ -1,5 +1,6 @@
 import pygame, math
 from Config import *
+from RoadFeatures import *
 pygame.init()
 
 
@@ -18,8 +19,6 @@ down = math.pi
 left = math.pi/2
 right = (3*math.pi)/2
 
-#maximum allowed distance between vehicles
-vehicleSpace = 3
 baseSpeed = 0.001
 greenSpeed = 10
 yellowSpeed = 3
@@ -28,17 +27,17 @@ killDistance = 100
 
 class Vehicle:
 
-    
     #CONSTRUCTOR
-    def __init__(self, screen, x, y, l, w, image, road, lane, pole, light, direction, nextVehic):
+    def __init__(self, screen, roadSystem, entrance, road, lane, nextVehic, exit):
         self.screen = screen
-        self.x, self.y = x, y
-        self.length, self.width = l, w
+        self.entrance = entrance
         self.road = road
-        self.pole = pole
-        self.light = light
         self.lane = lane
-        self.direction = direction
+        self.roadSystem = roadSystem
+        self.path = self.roadSystem.getPath(entrance,exit)
+        self.direction = "forward"
+        self.image = 'car.png'
+        self.setNextDestAndLight()
 
         #these parameters control the physics of the car
         self.speed = baseSpeed
@@ -48,57 +47,87 @@ class Vehicle:
         self.drag = self.mass/(self.mass + self.massOfAir)
         self.maxSpeed = 10
 
-        #this is the vehicle in front of the current one
-        #the position of this vehicle is used to prevent collision
+        #This is the vehicle in front of the current one, for collision avoidance
         self.nextVehic = nextVehic
 
-        #set the front facing direction of the vehicle
-        #depending on its road, the poleStop value
-        #which tells the vehicles where they need to stop at lights
-        #and properly rotate or flip the vehicle image
+        #road specific assignments
         if self.road.id==1:
+            self.length,self.width = int(self.roadSystem.segmentSize/2),int(self.roadSystem.segmentSize)
+            self.vehicSpace = self.width
             self.angle = down
-            self.poleStop = self.pole.y-(roadWidth*2)-self.length
-            self.poleSlow = self.poleStop/2
-            rawImg = pygame.image.load(image)
+            self.poleStop = self.pole.y-(self.roadSystem.roadGap*2)-(2*self.width)
+            rawImg = pygame.image.load(self.image)
             self.image = pygame.transform.smoothscale(rawImg,(self.length,self.width))
             self.rect = self.image.get_rect()
+            if self.lane.id == 1: self.x,self.y = entrance.x-roadSystem.segmentSize,entrance.y
+            if self.lane.id == 2: self.x,self.y = entrance.x+roadSystem.segmentSize,entrance.y
         elif self.road.id==2:
+            self.length,self.width = int(self.roadSystem.segmentSize),int(self.roadSystem.segmentSize/2)
+            self.vehicSpace = self.length/2
             self.angle = left
-            self.poleStop = self.pole.x+(roadWidth*2)+poleHeight
-            rawImg = pygame.transform.rotate(pygame.image.load(image),270)
+            self.poleStop = self.pole.x+(self.roadSystem.roadGap*1.2)+self.length
+            rawImg = pygame.transform.rotate(pygame.image.load(self.image),270)
             self.image = pygame.transform.smoothscale(rawImg,(self.length,self.width))
             self.rect = self.image.get_rect()
+            if self.lane.id == 1: self.x,self.y = entrance.x,entrance.y-roadSystem.segmentSize
+            if self.lane.id == 2: self.x,self.y = entrance.x,entrance.y+roadSystem.segmentSize
         elif self.road.id==3:
+            self.length,self.width = int(self.roadSystem.segmentSize/2),int(self.roadSystem.segmentSize)
+            self.vehicSpace = self.width
             self.angle = up
-            self.poleStop = self.pole.y+(roadWidth*2)+poleHeight
-            rawImg = pygame.transform.flip(pygame.image.load(image), False, True)
+            self.poleStop = self.pole.y+(self.roadSystem.roadGap*2)+(self.width)
+            rawImg = pygame.transform.flip(pygame.image.load(self.image), False, True)
             self.image = pygame.transform.smoothscale(rawImg,(self.length,self.width))
             self.rect = self.image.get_rect()
+            if self.lane.id == 1: self.x,self.y = entrance.x-roadSystem.segmentSize,entrance.y
+            if self.lane.id == 2: self.x,self.y = entrance.x+roadSystem.segmentSize,entrance.y
         elif self.road.id==4:
+            self.length,self.width = int(self.roadSystem.segmentSize),int(self.roadSystem.segmentSize/2)
+            self.vehicSpace = self.length
             self.angle = right
-            self.poleStop = self.pole.x-(roadWidth*2)-self.width
-            rawImg = pygame.transform.rotate(pygame.image.load(image),90)
+            self.poleStop = self.pole.x-(self.roadSystem.roadGap*1.2)-self.length
+            rawImg = pygame.transform.rotate(pygame.image.load(self.image),90)
             self.image = pygame.transform.smoothscale(rawImg,(self.length,self.width))
             self.rect = self.image.get_rect()
-
-
-
+            if self.lane.id == 1: self.x,self.y = entrance.x,entrance.y-roadSystem.segmentSize
+            if self.lane.id == 2: self.x,self.y = entrance.x,entrance.y+roadSystem.segmentSize
+        
 
         
     #this is the decision making method that asks questions of the other methods
     #and decides to move forward, brake, or remove itself from the vehicle list
     def auto(self):
+        """
         #if the vehicle is past the stop line and is in
         #the lanes list of vehicles
         if self.isPastLine() and self in self.lane.vehicles:
             self.lane.vehicles.remove(self)
+        """
+        #get a new pole and light if we pass the current one
+        if self.isPastLine() and len(self.path) >= 1:
+            x = self.path.pop(0)
+            self.setNextDestAndLight(andPoleStop=True)
         #accelerate if possible
         if self.canGo():
             self.move("forward")
         elif not self.canGo():
             self.move("brake")
 
+    """
+    def changeDir(self):
+        if self.angle == up:
+            self.angle = right
+            return
+        elif self.angle == right:
+            self.angle = down
+            return
+        elif self.angle == down:
+            self.angle = left
+            return
+        elif self.angle == left:
+            self.angle = up
+            return
+    """
 
 
     #this method draws the vehicle to the screen
@@ -163,7 +192,7 @@ class Vehicle:
                 if self.isPastLine(): return True
                 #if there is a vehicle in front of me
                 if self.nextVehic:
-                    vehicStop = self.nextVehic.y-self.length-vehicleSpace
+                    vehicStop = self.nextVehic.y-self.length-self.vehicSpace
                     #check if I have enough room to stop if I need to
                     if (self.poleStop-self.y) >= (eq*self.speed) and (vehicStop-self.y) >= (eq*self.speed):
                         return True
@@ -177,7 +206,7 @@ class Vehicle:
                 self.maxSpeed = greenSpeed
                 if self.isPastLine(): return True
                 if self.nextVehic:
-                    vehicStop = self.nextVehic.y-self.length-vehicleSpace
+                    vehicStop = self.nextVehic.y-self.length-self.vehicSpace
                     #check if I have enough room to stop if I need to
                     if (vehicStop-self.y) >= (eq*self.speed):
                         return True
@@ -190,7 +219,7 @@ class Vehicle:
                 else: self.maxSpeed = yellowSpeed
                 if self.isPastLine(): return True
                 if self.nextVehic:
-                    vehicStop = self.nextVehic.y-self.length-vehicleSpace
+                    vehicStop = self.nextVehic.y-self.length-self.vehicSpace
                     #check if I have enough room to stop if I need to
                     if (vehicStop-self.y) >= (eq*self.speed):
                         return True
@@ -207,7 +236,7 @@ class Vehicle:
                 if self.isPastLine(): return True
                 #if there is a vehicle in front of me
                 if self.nextVehic:
-                    vehicStop = self.nextVehic.x+self.length+vehicleSpace
+                    vehicStop = self.nextVehic.x+self.length+self.vehicSpace
                     #check if I have enough room to stop if I need to
                     if (abs(self.poleStop-self.x)) >= (eq*self.speed) and (abs(vehicStop-self.x)) >= (eq*self.speed):
                         return True
@@ -220,7 +249,7 @@ class Vehicle:
                 self.maxSpeed = greenSpeed
                 if self.isPastLine(): return True
                 if self.nextVehic:
-                    vehicStop = self.nextVehic.x+self.width+vehicleSpace
+                    vehicStop = self.nextVehic.x+self.width+self.vehicSpace
                     #check if I have enough room to stop if I need to
                     if (abs(vehicStop-self.x)) >= (eq*self.speed):
                         return True
@@ -232,7 +261,7 @@ class Vehicle:
                 else: self.maxSpeed = yellowSpeed
                 if self.isPastLine(): return True
                 if self.nextVehic:
-                    vehicStop = self.nextVehic.x+self.width+vehicleSpace
+                    vehicStop = self.nextVehic.x+self.width+self.vehicSpace
                     #check if I have enough room to stop if I need to
                     if (abs(vehicStop-self.x)) >= (eq*self.speed):
                         return True
@@ -248,7 +277,7 @@ class Vehicle:
                 if self.isPastLine(): return True
                 #if there is a vehicle in front of me
                 if self.nextVehic:
-                    vehicStop = self.nextVehic.y+self.length+vehicleSpace
+                    vehicStop = self.nextVehic.y+self.length+self.vehicSpace
                     #check if I have enough room to stop if I need to
                     if (abs(self.poleStop-self.y)) >= (eq*self.speed) and (abs(vehicStop-self.y)) >= (eq*self.speed):
                         return True
@@ -261,7 +290,7 @@ class Vehicle:
                 self.maxSpeed = greenSpeed
                 if self.isPastLine(): return True
                 if self.nextVehic:
-                    vehicStop = self.nextVehic.y+self.length+vehicleSpace
+                    vehicStop = self.nextVehic.y+self.length+self.vehicSpace
                     #check if I have enough room to stop if I need to
                     if (abs(vehicStop-self.y)) >= (eq*self.speed):
                         return True
@@ -273,7 +302,7 @@ class Vehicle:
                 else: self.maxSpeed = yellowSpeed
                 if self.isPastLine(): return True
                 if self.nextVehic:
-                    vehicStop = self.nextVehic.y+self.length+vehicleSpace
+                    vehicStop = self.nextVehic.y+self.length+self.vehicSpace
                     #check if I have enough room to stop if I need to
                     if (abs(vehicStop-self.y)) >= (eq*self.speed):
                         return True
@@ -289,7 +318,7 @@ class Vehicle:
                 if self.isPastLine(): return True
                 #if there is a vehicle in front of me
                 if self.nextVehic:
-                    vehicStop = self.nextVehic.x-self.width-vehicleSpace
+                    vehicStop = self.nextVehic.x-self.width-self.vehicSpace
                     #check if I have enough room to stop if I need to
                     if (abs(self.poleStop-self.x)) >= (eq*self.speed) and (abs(vehicStop-self.x)) >= (eq*self.speed):
                         return True
@@ -302,7 +331,7 @@ class Vehicle:
                 self.maxSpeed = greenSpeed
                 if self.isPastLine(): return True
                 if self.nextVehic:
-                    vehicStop = self.nextVehic.x-self.width-vehicleSpace
+                    vehicStop = self.nextVehic.x-self.width-self.vehicSpace
                     #check if I have enough room to stop if I need to
                     if (abs(vehicStop-self.x)) >= (eq*self.speed):
                         return True
@@ -314,7 +343,7 @@ class Vehicle:
                 else: self.maxSpeed = yellowSpeed
                 if self.isPastLine(): return True
                 if self.nextVehic:
-                    vehicStop = self.nextVehic.x-self.width-vehicleSpace
+                    vehicStop = self.nextVehic.x-self.width-self.vehicSpace
                     #check if I have enough room to stop if I need to
                     if (abs(vehicStop-self.x)) >= (eq*self.speed):
                         return True
@@ -322,8 +351,69 @@ class Vehicle:
                 elif not self.nextVehic:
                     return True
         return False
-        
 
-    #a utility method for visually marking areas of the screen
-    def showCircle(self, screen, color, circle, radius):
-        pygame.draw.circle(screen, color, circle, radius)
+    def setNextDestAndLight(self, andPoleStop=False):
+        for elem in self.path:
+            if isinstance(elem, Intersection):
+                self.pole = elem.poles[self.road.id-1]
+                self.light = self.pole.lights[self.lane.id-1]
+                if andPoleStop:
+                    if self.road.id==1 : self.poleStop = self.pole.y-(self.roadSystem.roadGap*2)-(2*self.width)
+                    elif self.road.id==2 : self.poleStop = self.pole.x+(self.roadSystem.roadGap*1.2)+self.length
+                    elif self.road.id==3 : self.poleStop = self.pole.y+(self.roadSystem.roadGap*2)+(self.width)
+                    elif self.road.id==4 : self.poleStop = self.pole.x-(self.roadSystem.roadGap*1.2)-self.length
+                break
+        return
+
+    def turn(self, id):
+        #road specific assignments
+        if id==1:
+            self.length,self.width = int(self.roadSystem.segmentSize/2),int(self.roadSystem.segmentSize)
+            self.vehicSpace = self.width
+            self.angle = down
+            self.setNextDestAndLight()
+            rawImg = pygame.image.load(self.image)
+            self.image = pygame.transform.smoothscale(rawImg,(self.length,self.width))
+            self.rect = self.image.get_rect()
+        elif id==2:
+            self.length,self.width = int(self.roadSystem.segmentSize),int(self.roadSystem.segmentSize/2)
+            self.vehicSpace = self.length/2
+            self.angle = left
+            self.setNextDestAndLight()
+            rawImg = pygame.transform.rotate(pygame.image.load(self.image),270)
+            self.image = pygame.transform.smoothscale(rawImg,(self.length,self.width))
+            self.rect = self.image.get_rect()
+        elif id==3:
+            self.length,self.width = int(self.roadSystem.segmentSize/2),int(self.roadSystem.segmentSize)
+            self.vehicSpace = self.width
+            self.angle = up
+            self.setNextDestAndLight()
+            rawImg = pygame.transform.flip(pygame.image.load(self.image), False, True)
+            self.image = pygame.transform.smoothscale(rawImg,(self.length,self.width))
+            self.rect = self.image.get_rect()
+        elif id==4:
+            self.length,self.width = int(self.roadSystem.segmentSize),int(self.roadSystem.segmentSize/2)
+            self.vehicSpace = self.length
+            self.angle = right
+            self.setNextDestAndLight()
+            rawImg = pygame.transform.rotate(pygame.image.load(self.image),90)
+            self.image = pygame.transform.smoothscale(rawImg,(self.length,self.width))
+            self.rect = self.image.get_rect()
+
+
+    #preserved methods
+    """
+    def setNextDestAndLight(self, andPoleStop=False):
+        for elem in self.path:
+            if isinstance(elem, Intersection):
+                self.pole = elem.poles[self.road.id-1]
+                self.light = self.pole.lights[self.lane.id-1]
+                if andPoleStop:
+                    if self.road.id==1 : self.poleStop = self.pole.y-(self.roadSystem.roadGap*2)-(2*self.width)
+                    elif self.road.id==2 : self.poleStop = self.pole.x+(self.roadSystem.roadGap*1.2)+self.length
+                    elif self.road.id==3 : self.poleStop = self.pole.y+(self.roadSystem.roadGap*2)+(self.width)
+                    elif self.road.id==4 : self.poleStop = self.pole.x-(self.roadSystem.roadGap*1.2)-self.length
+                break
+        return
+    """
+        

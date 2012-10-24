@@ -8,6 +8,9 @@ from pprint import pprint
 #dimensions of the simulation window
 size = width, height = 1280, 720
 
+#file name of the RoadSystem
+roadSystemFileName = 'roadSystems/r2.txt'
+
 #positioning variables
 middleX = int(width/2)
 middleY = int(height/2)

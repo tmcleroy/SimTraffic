@@ -1,16 +1,46 @@
 import sys, pygame
-from RoadSystem import *
 from Config import *
+from Overwatch import *
+from RoadSystem import *
+from RoadFeatures import * 
 from Vehicle import *
 
 
-#initialize pygame, the game library used for visually
-#representing the simulation
+#initialize pygame, the graphics library used for visually representing the simulation
 pygame.init()
 
-#initialize the screen surface onto which everything
-#will be drawn
+#initialize the screen surface onto which everything will be drawn
 screen = pygame.display.set_mode(size)
+rs = RoadSystem(roadSystemFileName, screen, width, height)
+vehics=[]
+ow = Overwatch(rs, vehics)
+        
+
+#returns the last vehicle spawned on the given road
+def getPrevVehic(road):
+    if len(ow.vehics) == 0 : return None
+    limit = -1*len(ow.vehics)
+    i = -1
+    while  i >= limit:
+        if ow.vehics[i].road.id == road.id: return ow.vehics[i]
+        i -= 1
+    return None
+        
+
+#spawns a vehicle and adds it to the car list
+def spawnVehic(entrance, road, lane, exit):
+    entrance = ow.rs.features[entrance]
+    road = ow.rs.features[road]
+    exit = ow.rs.features[exit]
+    frontVehic = getPrevVehic(road)
+    
+    v = Vehicle(screen, ow.rs, entrance, road, road.lanes[lane-1], frontVehic, exit)
+    
+    road.lanes[lane-1].vehicles.append(v)    
+    ow.vehics.append(v)
+
+
+
 
 #initialize the clock instance which allows framerate regulation
 Clock = pygame.time.Clock()
@@ -22,8 +52,7 @@ Font = pygame.font.Font(None, 36)
 frameCount = 0
 secondsPassed = 0
 
-rs = RoadSystem('r1.txt', screen, width, height)
-cars = []
+
 
 #GAME LOOP. This will run every frame (120 times per second) until the program is closed
 while True:
@@ -42,7 +71,6 @@ while True:
     frameCount += 1
     if frameCount % framerate == 0: secondsPassed += 1
 
-    
     #generates the info text labels. These must be
     #in multiple labels because the font renderer
     #cannot handle newline characters
@@ -51,22 +79,36 @@ while True:
     secondsText = ("Seconds Passed: "+str(secondsPassed))
     secondsLabel = Font.render(secondsText, 1, black)
 
-    rs.draw()
+    ow.rs.draw()
 
-    for car in cars:
-        car.auto()
-        car.draw()
+    
+    for vehic in ow.vehics:
+        vehic.auto()
+        vehic.draw()
+    
     
     #handle keyboard input
     if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_1:
                 if frameCount%10 == 0:
-                    c = Vehicle(screen,rs.features['EA1'].x,rs.features['EA1'].y,20,10,'car.png',rs.features['R2'],rs.features['R2'].lane1,rs.features['PA3'],rs.features['PA3'].light1,'forward',rs.features['R2'].lane1.getLastVehicle())
-                    rs.features['R2'].lane1.vehicles.append(c)
-                    cars.append(c)
+                    spawnVehic(entrance='EnC1', road='SR10', lane=1, exit='ExC1')
             elif event.key == pygame.K_2:
-                print('asdf')
-
+                if frameCount%10 == 0:
+                    spawnVehic(entrance='EnB1', road='R1', lane=1, exit='ExB1')
+            elif event.key == pygame.K_3:
+                if frameCount%10 == 0:
+                    spawnVehic(entrance='EnD2', road='SR21', lane=1, exit='ExD2')
+            elif event.key == pygame.K_4:
+                if frameCount%10 == 0:
+                    spawnVehic(entrance='EnA1', road='R3', lane=1, exit='ExA1')
+            elif event.key == pygame.K_0:
+                ow.setAllLights("go")
+            elif event.key == pygame.K_9:
+                ow.setAllLights("stop")
+            elif event.key == pygame.K_l:
+                if frameCount%10 == 0:
+                    for vehic in ow.vehics:
+                        vehic.changeDir()
     
     #display the FPS (Frames Per Second) and info text
     screen.blit(fpsLabel, (0,0))

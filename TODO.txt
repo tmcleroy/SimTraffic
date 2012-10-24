@@ -4,4 +4,4 @@ implement turning
 
 lights positions on the poles don't scale properly
 
-change repo name from SimLightDowntown to just SimLight
+Maybe move the draw functions from each individual object to the graphics part of main
