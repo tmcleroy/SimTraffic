@@ -227,7 +227,7 @@ class RoadSystem:
     def getStringBetween(self,string, start='', end=''):
         return string.split(start)[1].split(end)[0]
         
-"""
+
 r = RoadSystem('roadSystems/r2.txt')
 print ("RoadSystem r has been created")
-"""
+
