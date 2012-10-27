@@ -12,5 +12,5 @@ class LightController:
     def getIntersections(self):
         intersections = []
         for feature in self.ow.rs.features.values():
-            if isinstance(feature, Intersection): intersection.addend(feature)
+            if isinstance(feature, Intersection): intersections.append(feature)
         return intersections
