@@ -356,6 +356,7 @@ class Vehicle:
         for elem in self.path:
             if isinstance(elem, Intersection):
                 self.pole = elem.poles[self.road.id-1]
+                if not self in self.pole.vehics: self.pole.vehics.append(self)
                 self.light = self.pole.lights[self.lane.id-1]
                 if andPoleStop:
                     if self.road.id==1 : self.poleStop = self.pole.y-(self.roadSystem.roadGap*2)-(2*self.width)
@@ -363,6 +364,7 @@ class Vehicle:
                     elif self.road.id==3 : self.poleStop = self.pole.y+(self.roadSystem.roadGap*2)+(self.width)
                     elif self.road.id==4 : self.poleStop = self.pole.x-(self.roadSystem.roadGap*1.2)-self.length
                 break
+        
         return
 
     def turn(self, id):

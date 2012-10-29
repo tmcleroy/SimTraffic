@@ -124,7 +124,9 @@ class LightPole:
         self.width = width
         self.height = height
         self.color = color
+        self.vehics = []
         self.isDrawable = True
+        
 
 
     def __repr__(self):

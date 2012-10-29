@@ -8,6 +8,7 @@ class LightController:
     def __init__(self, overwatch):
         self.ow = overwatch
         self.intersections = self.getIntersections()
+        pprint(self.intersections)
 
     def getIntersections(self):
         intersections = []
