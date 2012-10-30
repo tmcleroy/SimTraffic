@@ -97,15 +97,12 @@ class Vehicle:
     #this is the decision making method that asks questions of the other methods
     #and decides to move forward, brake, or remove itself from the vehicle list
     def auto(self):
-        """
-        #if the vehicle is past the stop line and is in
-        #the lanes list of vehicles
-        if self.isPastLine() and self in self.lane.vehicles:
-            self.lane.vehicles.remove(self)
-        """
         #get a new pole and light if we pass the current one
         if self.isPastLine() and len(self.path) >= 1:
+            #remove the vehicle from the poles list
+            if isinstance(self.path[0], Intersection) and self in self.pole.vehics: self.pole.vehics.remove(self)
             x = self.path.pop(0)
+            #set the vehicles next destination
             self.setNextDestAndLight(andPoleStop=True)
         #accelerate if possible
         if self.canGo():
@@ -113,21 +110,6 @@ class Vehicle:
         elif not self.canGo():
             self.move("brake")
 
-    """
-    def changeDir(self):
-        if self.angle == up:
-            self.angle = right
-            return
-        elif self.angle == right:
-            self.angle = down
-            return
-        elif self.angle == down:
-            self.angle = left
-            return
-        elif self.angle == left:
-            self.angle = up
-            return
-    """
 
 
     #this method draws the vehicle to the screen
@@ -355,9 +337,12 @@ class Vehicle:
     def setNextDestAndLight(self, andPoleStop=False):
         for elem in self.path:
             if isinstance(elem, Intersection):
+                #set new pole and light
                 self.pole = elem.poles[self.road.id-1]
-                if not self in self.pole.vehics: self.pole.vehics.append(self)
                 self.light = self.pole.lights[self.lane.id-1]
+                #add the vehicle to the new poles list
+                if not self in self.pole.vehics: self.pole.vehics.append(self)
+                
                 if andPoleStop:
                     if self.road.id==1 : self.poleStop = self.pole.y-(self.roadSystem.roadGap*2)-(2*self.width)
                     elif self.road.id==2 : self.poleStop = self.pole.x+(self.roadSystem.roadGap*1.2)+self.length

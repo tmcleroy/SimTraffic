@@ -106,9 +106,10 @@ while True:
             elif event.key == pygame.K_9:
                 ow.setAllLights("stop")
             elif event.key == pygame.K_l:
-                if frameCount%10 == 0:
-                    for vehic in ow.vehics:
-                        vehic.changeDir()
+                for intersection in ow.lc.intersections:
+                    for pole in intersection.poles:
+                        if len(pole.vehics) > 0:
+                            print(pole," has: ",pole.vehics)
     
     #display the FPS (Frames Per Second) and info text
     screen.blit(fpsLabel, (0,0))

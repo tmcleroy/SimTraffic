@@ -131,7 +131,8 @@ class LightPole:
 
     def __repr__(self):
         return "LightPole Object: "+self.name
-
+    
+    
     def setAllLights(self, state):
         for light in self.lights:
             light.setState(state)
