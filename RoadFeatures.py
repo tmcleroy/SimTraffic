@@ -1,5 +1,6 @@
 import pygame
 from Config import *
+from IntersectionController import IntersectionController
 
 class Road:
     def __init__(self, name, id, screen, line, lane1, lane2, color=black):
@@ -67,8 +68,8 @@ class Intersection:
         self.name = name
         self.x, self.y = anchor.x, anchor.y
         self.poles = poles
+        self.controller = IntersectionController(self)
         self.isDrawable = False
-
 
     def __repr__(self):
         return "Intersection Object: "+self.name
@@ -126,16 +127,11 @@ class LightPole:
         self.color = color
         self.vehics = []
         self.isDrawable = True
-        
 
 
     def __repr__(self):
         return "LightPole Object: "+self.name
     
-    
-    def setAllLights(self, state):
-        for light in self.lights:
-            light.setState(state)
 
     #returns the intersection that contains this lightpole
     def getParent(self, intersections):

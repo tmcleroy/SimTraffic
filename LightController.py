@@ -17,7 +17,10 @@ class LightController:
         return intersections
 
 
-class IntersectionController:
+    def setAllLights(self, state):
+        for intersection in self.intersections:
+            intersection.controller.setAllLights(state)
 
-    def __init__(self, intersection):
-        self.intersection = intersection
+    def transAllToState(self, state):
+        for intersection in self.intersections:
+            intersection.controller.transAllToState(state)

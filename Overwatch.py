@@ -12,8 +12,10 @@ class Overwatch:
         self.lc = LightController(self)
 
 
+"""
     def setAllLights(self, state):
         for feature in self.rs.features.values():
             if isinstance(feature, LightPole) : feature.setAllLights(state)
     
 
+"""
