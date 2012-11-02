@@ -20,8 +20,8 @@ left = math.pi/2
 right = (3*math.pi)/2
 
 baseSpeed = 0.001
-greenSpeed = 10
-yellowSpeed = 3
+greenSpeed = 0.5
+yellowSpeed = 0.3
 vehicStop = None
 killDistance = 100
 

@@ -85,6 +85,8 @@ while True:
     for vehic in ow.vehics:
         vehic.auto()
         vehic.draw()
+
+    ow.lc.auto()
     
     
     #handle keyboard input
@@ -102,13 +104,13 @@ while True:
                 if frameCount%10 == 0:
                     spawnVehic(entrance='EnA1', road='R3', lane=1, exit='ExA1')
             elif event.key == pygame.K_0:
-                ow.lc.setAllLights("go")
+                ow.lc.setAll([0,1,2,3], "go")
             elif event.key == pygame.K_9:
-                ow.lc.setAllLights("stop")
+                ow.lc.setAll([0,1,2,3], "stop")
             elif event.key == pygame.K_8:
-                ow.lc.transAllToState("go")
+                ow.lc.transAllToState([0,1,2,3], "go")
             elif event.key == pygame.K_7:
-                ow.lc.transAllToState("stop")
+                ow.lc.transAllToState([0,1,2,3], "stop")
             elif event.key == pygame.K_l:
                 for intersection in ow.lc.intersections:
                     for pole in intersection.poles:

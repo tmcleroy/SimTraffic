@@ -8,6 +8,11 @@ class LightController:
     def __init__(self, overwatch):
         self.ow = overwatch
         self.intersections = self.getIntersections()
+
+
+    def auto(self):
+        for intersection in self.intersections:
+            intersection.controller.auto()
         
 
     def getIntersections(self):
@@ -17,10 +22,12 @@ class LightController:
         return intersections
 
 
-    def setAllLights(self, state):
+    def setAll(self, lights, state):
         for intersection in self.intersections:
-            intersection.controller.setAllLights(state)
+            intersection.controller.setLights(lights, state)
 
-    def transAllToState(self, state):
+
+    def transAllToState(self, lights, state):
         for intersection in self.intersections:
-            intersection.controller.transAllToState(state)
+            intersection.controller.transToState(lights, state)
+
