@@ -11,7 +11,7 @@ class IntersectionController(Thread):
 
 
     def run(self):
-        print("in run ", self.intersection)
+        #print("in run ", self.intersection)
 
         numOdd = len(self.poles[0].vehics)+len(self.poles[2].vehics)
         numEven = len(self.poles[1].vehics)+len(self.poles[3].vehics)
@@ -77,6 +77,7 @@ class IntersectionController(Thread):
             self.setLights([0,2], 'slow')
             time.sleep(3)
             self.setLights([0,2], 'stop')
+            time.sleep(1)
             self.setLights([1,3], 'go')
             self.curr_flow = 'even'
             
@@ -91,6 +92,7 @@ class IntersectionController(Thread):
             self.setLights([1,3], 'slow')
             time.sleep(3)
             self.setLights([1,3], 'stop')
+            time.sleep(1)
             self.setLights([0,2], 'go')
             self.curr_flow = 'odd'         
             

@@ -35,12 +35,12 @@ def autoVehicSpawn(frameCount):
     
 
 #returns the last vehicle spawned on the given road
-def getPrevVehic(road):
+def getPrevVehic(road, lane):
     if len(ow.vehics) == 0 : return None
     limit = -1*len(ow.vehics)
     i = -1
     while  i >= limit:
-        if ow.vehics[i].road == road : return ow.vehics[i]
+        if ow.vehics[i].road == road and ow.vehics[i].lane.id == lane : return ow.vehics[i]
         i -= 1
     return None
         
@@ -50,7 +50,7 @@ def spawnVehic(entrance, lane, exit):
     entrance = ow.rs.features[entrance]
     road = entrance.road
     exit = ow.rs.features[exit]
-    frontVehic = getPrevVehic(road)
+    frontVehic = getPrevVehic(road, lane)
     
     v = Vehicle(screen, ow.rs, entrance, road, road.lanes[lane-1], frontVehic, exit)
     
@@ -60,16 +60,15 @@ def spawnVehic(entrance, lane, exit):
 
 
 
-#initialize the clock instance which allows framerate regulation
+#initialize the clock and timing variables
 Clock = pygame.time.Clock()
-
-#a font instance must be initialized so we can render text within the game loop
-Font = pygame.font.Font(None, 36)
-
 frameCount = 0
 secondsPassed = 0
 
-#t = threading.Thread(target=ow.lc.auto)
+#font for rendering text
+Font = pygame.font.Font(None, 36)
+
+#start the light controller
 ow.lc.start()
 
 #GAME LOOP. This will run every frame (120 times per second) until the program is closed
@@ -98,26 +97,17 @@ while True:
     secondsText = ("Seconds Passed: "+str(secondsPassed))
     secondsLabel = Font.render(secondsText, 1, black)
 
+
+    #draw the road system
     ow.rs.draw()
 
     #auto spawn vehicles
     autoVehicSpawn(frameCount)
 
-    
+    #draw the vehicles
     for vehic in ow.vehics:
         vehic.auto()
         vehic.draw()
-
-    #automatically control lights
-    
-    """
-    if not t.is_alive():
-        print("not alive")
-        t = threading.Thread(target=ow.lc.auto)
-        t.start()
-    """
-    
-    #ow.lc.auto()
     
     
     #handle keyboard input

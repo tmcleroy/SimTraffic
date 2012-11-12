@@ -1,4 +1,4 @@
-import pygame, math
+import pygame, math, random
 from Config import *
 from RoadFeatures import *
 pygame.init()
@@ -38,6 +38,10 @@ class Vehicle:
         self.direction = "forward"
         self.image = 'car.bmp'
         self.setNextDestAndLight()
+
+        #randomize speeds
+        greenSpeed = random.uniform(0.2, 1.2)
+        yellowSpeed = random.uniform(0.1, 0.5)
 
         if nextVehic and not self.road == nextVehic.road:
             print(self.road.id," not equal to ",nextVehic.road.id)
