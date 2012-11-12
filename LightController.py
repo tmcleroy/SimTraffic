@@ -1,3 +1,4 @@
+import threading
 from Config import *
 from RoadSystem import *
 from RoadFeatures import * 
@@ -10,10 +11,23 @@ class LightController:
         self.intersections = self.getIntersections()
 
 
-    def auto(self):
+    def start(self):
         for intersection in self.intersections:
-            intersection.controller.auto()
+            intersection.controller.start()
+            #intersection.controller.join()
+            
+            
+    def auto(self):
+        print('asdfasdfafd')
         
+        """
+        t = threading.Thread(target=intersection.controller.auto)
+        if not t.is_alive():
+            t = threading.Thread(target=intersection.controller.auto)
+            t.start()
+        """
+        #ntersection.controller.auto()
+    
 
     def getIntersections(self):
         intersections = []

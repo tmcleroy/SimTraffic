@@ -85,6 +85,7 @@ class Entrance:
         self.width = width
         self.height = height
         self.color = color
+        self.road = None
         self.isDrawable = True
 
     def __repr__(self):
@@ -175,3 +176,16 @@ class Light:
         if self.state == "go":self.color = green
         elif self.state == "stop":self.color = red
         elif self.state == "slow":self.color = yellow
+
+class SpawnFrequencyIndex:
+
+    def __init__(self):
+        self.spawnsPerMin = {}
+        self.mods = {}
+
+    #sets the modulus values that will be used to spawn the vehicles
+    #a set number of times per minute
+    def setMods(self):
+        for key in self.spawnsPerMin.keys():
+            self.mods[key] = int(7200/self.spawnsPerMin[key])
+        

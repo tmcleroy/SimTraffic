@@ -36,8 +36,11 @@ class Vehicle:
         self.roadSystem = roadSystem
         self.path = self.roadSystem.getPath(entrance,exit)
         self.direction = "forward"
-        self.image = 'car.png'
+        self.image = 'car.bmp'
         self.setNextDestAndLight()
+
+        if nextVehic and not self.road == nextVehic.road:
+            print(self.road.id," not equal to ",nextVehic.road.id)
 
         #these parameters control the physics of the car
         self.speed = baseSpeed

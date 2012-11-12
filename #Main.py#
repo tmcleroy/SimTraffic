@@ -1,0 +1,15 @@
+import sys, pygame
+from Config import *
+from Overwatch import *
+from RoadSystem import *
+from RoadFeatures import * 
+from Vehicle import *
+
+
+#initialize pygame, the graphics library used for visually representing the simulation
+pygame.init()
+
+#initialize the screen surface onto which everything will be drawn
+screen = pygame.display.set_mode(size)
+rs = RoadSystem(roadSystemFileName, screen, width, height)
+vehics=[]
