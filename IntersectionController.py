@@ -3,33 +3,33 @@ from threading import Thread
 
 class IntersectionController(Thread):
 
-    def __init__(self, intersection):
+    def __init__(self, intersection, timing):
         self.intersection = intersection
         self.poles = self.intersection.poles
+        self.timing = timing
         self.curr_flow = None
         Thread.__init__(self)
 
-
+	#this method runs automatically when start() is called on an instance of this class
     def run(self):
-        #print("in run ", self.intersection)
-
+        	        
         numOdd = len(self.poles[0].vehics)+len(self.poles[2].vehics)
         numEven = len(self.poles[1].vehics)+len(self.poles[3].vehics)
 
-
-        if numOdd > numEven and self.curr_flow == 'even':
-            self.flow('odd')
-            time.sleep(5)
-        elif numEven > numOdd and self.curr_flow == 'odd':
-            self.flow('even')
-            time.sleep(5)
-        elif numEven == numOdd and not self.curr_flow == 'even':
-            self.flow('even')
-            time.sleep(5)
-        else: 
-            time.sleep(5)
-            
-        self.run()
+        if self.timing == 'independent':
+            if numOdd > numEven and self.curr_flow == 'even':
+                self.flow('odd')
+                time.sleep(5)
+            elif numEven > numOdd and self.curr_flow == 'odd':
+                self.flow('even')
+                time.sleep(5)
+            elif numEven == numOdd and not self.curr_flow == 'even':
+                self.flow('even')
+                time.sleep(5)
+            else: 
+                time.sleep(5)
+    
+            self.run()
 
 
         

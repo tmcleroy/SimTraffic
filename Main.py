@@ -52,7 +52,7 @@ def spawnVehic(entrance, lane, exit):
     exit = ow.rs.features[exit]
     frontVehic = getPrevVehic(road, lane)
     
-    v = Vehicle(screen, ow.rs, entrance, road, road.lanes[lane-1], frontVehic, exit)
+    v = Vehicle(screen, ow.rs, entrance, road, road.lanes[lane-1], frontVehic, exit, ow)
     
     road.lanes[lane-1].vehicles.append(v)    
     ow.vehics.append(v)
@@ -69,7 +69,7 @@ secondsPassed = 0
 Font = pygame.font.Font(None, 36)
 
 #start the light controller
-ow.lc.start()
+ow.lc.start(mode='independent')
 
 #GAME LOOP. This will run every frame (120 times per second) until the program is closed
 while True:

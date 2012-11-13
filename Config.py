@@ -11,6 +11,9 @@ size = width, height = 1280, 720
 #file name of the RoadSystem
 roadSystemFileName = 'roadSystems/r2.txt'
 
+#type of light timing
+TIMING = 'independent'
+
 #positioning variables
 middleX = int(width/2)
 middleY = int(height/2)

@@ -10,7 +10,7 @@ poleWidth = 5
 poleHeight = 10
 
 #should be 39 according to the equation describing 
-#how fast a vehicle stops...Pixels to stop = 39 * speed
+#how fast a vehicle stops...pixels to stop = 39 * speed
 eq = 39
 
 #degrees in radians that define car movement direction
@@ -28,7 +28,7 @@ killDistance = 100
 class Vehicle:
 
     #CONSTRUCTOR
-    def __init__(self, screen, roadSystem, entrance, road, lane, nextVehic, exit):
+    def __init__(self, screen, roadSystem, entrance, road, lane, nextVehic, exit, ow):
         self.screen = screen
         self.entrance = entrance
         self.road = road
@@ -37,17 +37,17 @@ class Vehicle:
         self.path = self.roadSystem.getPath(entrance,exit)
         self.direction = "forward"
         self.image = 'car.bmp'
+        self.ow = ow
         self.setNextDestAndLight()
 
+        
         #randomize speeds
         greenSpeed = random.uniform(0.2, 1.2)
         yellowSpeed = random.uniform(0.1, 0.5)
-
-        if nextVehic and not self.road == nextVehic.road:
-            print(self.road.id," not equal to ",nextVehic.road.id)
+        
 
         #these parameters control the physics of the car
-        self.speed = baseSpeed
+        self.speed = 0.00
         self.mass = 1
         self.massOfAir = 0.15
         self.acceleration = 1
@@ -105,12 +105,20 @@ class Vehicle:
     #and decides to move forward, brake, or remove itself from the vehicle list
     def auto(self):
         #get a new pole and light if we pass the current one
-        if self.isPastLine() and len(self.path) >= 1:
-            #remove the vehicle from the poles list
+        if self.isPastLine() and len(self.path) >= 2:
+            #remove the vehicle from the current poles list because it has passed it
             if isinstance(self.path[0], Intersection) and self in self.pole.vehics: self.pole.vehics.remove(self)
+            #remove the pole that we just passed from the path, assigning it to x is a language restraint
             x = self.path.pop(0)
             #set the vehicles next destination
             self.setNextDestAndLight(andPoleStop=True)
+        elif self.isPastLine() and len(self.path) <= 1:
+            #delete this instance of vehicle so that it will be garbage collected
+            self.ow.removeVehic(self)
+            
+        #remove a vehicle from the nextVehic slot if it has been garbage collected
+        if self.nextVehic and not self.nextVehic in self.ow.vehics : self.nextVehic = None
+            
         #accelerate if possible
         if self.canGo():
             self.move("forward")
@@ -161,18 +169,14 @@ class Vehicle:
         elif self.road.id==3:return self.y < self.poleStop
         elif self.road.id==4:return self.x > self.poleStop
 
-    def isOutOfBounds(self):
-        if   self.road.id==1:return self.y > height+100
-        elif self.road.id==2:return self.x < 0-100
-        elif self.road.id==3:return self.y < 0-100
-        elif self.road.id==4:return self.x > width+100
-
 
 
     #this method determines whether or not a vehicle can accelerate
     #it is only so long because it must contain 4 slightly different
     #versions of basically the same code
     def canGo(self):
+        #if the vehicle in front has been garbage collected, we can go
+        if not self.nextVehic and isinstance(self.pole, Exit) : return True
         if self.road.id == 1:
             if self.light.state == "stop":
                 self.maxSpeed = greenSpeed
@@ -349,15 +353,23 @@ class Vehicle:
                 self.light = self.pole.lights[self.lane.id-1]
                 #add the vehicle to the new poles list
                 if not self in self.pole.vehics: self.pole.vehics.append(self)
-                
                 if andPoleStop:
                     if self.road.id==1 : self.poleStop = self.pole.y-(self.roadSystem.roadGap*2)-(2*self.width)
                     elif self.road.id==2 : self.poleStop = self.pole.x+(self.roadSystem.roadGap*1.2)+self.length
                     elif self.road.id==3 : self.poleStop = self.pole.y+(self.roadSystem.roadGap*2)+(self.width)
                     elif self.road.id==4 : self.poleStop = self.pole.x-(self.roadSystem.roadGap*1.2)-self.length
                 break
-        
-        return
+                
+            elif isinstance(elem, Exit):
+                self.pole = elem
+                if andPoleStop:
+                    if self.road.id==1 : self.poleStop = self.pole.y
+                    elif self.road.id==2 : self.poleStop = self.pole.x
+                    elif self.road.id==3 : self.poleStop = self.pole.y
+                    elif self.road.id==4 : self.poleStop = self.pole.x
+                break
+            
+            
 
     def turn(self, id):
         #road specific assignments
@@ -395,19 +407,3 @@ class Vehicle:
             self.rect = self.image.get_rect()
 
 
-    #preserved methods
-    """
-    def setNextDestAndLight(self, andPoleStop=False):
-        for elem in self.path:
-            if isinstance(elem, Intersection):
-                self.pole = elem.poles[self.road.id-1]
-                self.light = self.pole.lights[self.lane.id-1]
-                if andPoleStop:
-                    if self.road.id==1 : self.poleStop = self.pole.y-(self.roadSystem.roadGap*2)-(2*self.width)
-                    elif self.road.id==2 : self.poleStop = self.pole.x+(self.roadSystem.roadGap*1.2)+self.length
-                    elif self.road.id==3 : self.poleStop = self.pole.y+(self.roadSystem.roadGap*2)+(self.width)
-                    elif self.road.id==4 : self.poleStop = self.pole.x-(self.roadSystem.roadGap*1.2)-self.length
-                break
-        return
-    """
-        

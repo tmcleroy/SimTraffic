@@ -68,7 +68,7 @@ class Intersection:
         self.name = name
         self.x, self.y = anchor.x, anchor.y
         self.poles = poles
-        self.controller = IntersectionController(self)
+        self.controller = IntersectionController(self, TIMING)
         self.isDrawable = False
 
     def __repr__(self):
