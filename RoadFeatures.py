@@ -2,15 +2,23 @@ import pygame
 from Config import *
 from IntersectionController import IntersectionController
 
+#this file contains the features that make up a RoadSystem
+
 class Road:
-    def __init__(self, name, id, screen, line, lane1, lane2, color=black):
+    def __init__(self, name, id, screen, lines, lane1, lane2, segmentSize, roadColor=road_grey, lineColor=road_line_yellow, layer=0):
         self.name = name
         self.id = id
         self.screen = screen
-        self.color = color
-        self.line = line
+        self.roadColor = roadColor
+        self.lineColor = lineColor
+        self.lines = lines
         self.lanes = [lane1,lane2]
+        self.segmentSize = segmentSize
         self.isDrawable = True
+        self.layer = layer
+        self.rect = None
+        self.setDraw()
+
 
     def __repr__(self):
         return "Road Object: "+self.name
@@ -24,8 +32,20 @@ class Road:
     def isEven(self):
         return not self.isOdd()
 
+    def setDraw(self):
+        lineRect = pygame.draw.lines(self.screen, self.lineColor, False, self.lines)
+        if self.id == 1 or self.id == 3:
+            lineRect.width *= self.segmentSize * 4
+            lineRect.x -= lineRect.width/2
+        elif self.id == 2 or self.id == 4:
+            lineRect.height *= self.segmentSize * 4
+            lineRect.y -= lineRect.height/2
+        self.rect = lineRect
+
     def draw(self):
-        pygame.draw.lines(self.screen, self.color, False, self.line)
+        pygame.draw.rect(self.screen, self.roadColor, self.rect)
+        pygame.draw.lines(self.screen, self.lineColor, False, self.lines)
+
 
 
 class Lane:
@@ -47,7 +67,7 @@ class Lane:
         else: return False
         
 class Anchor:
-    def __init__(self, name, screen, x=0, y=0, color=purple, width=2, height=2):
+    def __init__(self, name, screen, x=0, y=0, color=purple, width=2, height=2, layer=0):
         self.name = name
         self.x = x
         self.y = y
@@ -55,7 +75,8 @@ class Anchor:
         self.color = color
         self.width = width
         self.height = height
-        self.isDrawable = True
+        self.isDrawable = False
+        self.layer = layer
 
     def __repr__(self):
         return "Anchor Object: "+self.name
@@ -75,7 +96,7 @@ class Intersection:
         return "Intersection Object: "+self.name
 
 class Entrance:
-    def __init__(self, name, screen, poleStack=[], x=0, y=0, width=5, height=5, color=green, id=0):
+    def __init__(self, name, screen, poleStack=[], x=0, y=0, width=5, height=5, color=green, id=0, layer=1):
         self.name = name
         self.id = id
         self.screen = screen
@@ -86,7 +107,8 @@ class Entrance:
         self.height = height
         self.color = color
         self.road = None
-        self.isDrawable = True
+        self.isDrawable = False#True
+        self.layer = layer
 
     def __repr__(self):
         return "Entrance Object: "+self.name
@@ -95,7 +117,7 @@ class Entrance:
         pygame.draw.rect(self.screen, self.color, (self.x-(self.height/2), self.y-(self.width/2), self.width, self.height), 0)
 
 class Exit:
-    def __init__(self, name, screen, x=0, y=0, width=5, height=5, color=red, id=0):
+    def __init__(self, name, screen, x=0, y=0, width=5, height=5, color=red, id=0, layer=1):
         self.name = name
         self.id = id
         self.screen = screen
@@ -104,7 +126,8 @@ class Exit:
         self.width = width
         self.height = height
         self.color = color
-        self.isDrawable = True
+        self.isDrawable = False#True
+        self.layer = layer
 
     def __repr__(self):
         return "Exit Object: "+self.name
@@ -116,7 +139,7 @@ class Exit:
 
 class LightPole:
 
-    def __init__(self, name, id, screen, light1, light2, x=0, y=0, width=5, height=5, color=black):
+    def __init__(self, name, id, screen, light1, light2, x=0, y=0, width=5, height=5, color=black, layer=1):
         self.name = name
         self.id = int(id)
         self.screen = screen
@@ -128,6 +151,7 @@ class LightPole:
         self.color = color
         self.vehics = []
         self.isDrawable = True
+        self.layer = layer
 
 
     def __repr__(self):
@@ -146,22 +170,23 @@ class LightPole:
         pygame.draw.rect(self.screen, self.color, (self.x, self.y-(self.height/2), self.width, self.height), 0)
         #draw the lights
         if self.id%2 == 1:
-            pygame.draw.circle(self.screen, self.lights[0].color, (int(self.x+self.lights[0].diameter+(self.height/4)+2),int(self.y)), int(self.height/2))
-            pygame.draw.circle(self.screen, self.lights[1].color, (int(self.x+self.lights[1].diameter+(self.height)+6),int(self.y)), int(self.height/2))
+            pygame.draw.circle(self.screen, self.lights[0].color, (int(self.x+self.lights[0].diameter),int(self.y)), int(self.lights[0].diameter))#int(self.height/2))
+            pygame.draw.circle(self.screen, self.lights[1].color, (int(self.x+self.lights[1].diameter*3),int(self.y)), int(self.lights[0].diameter))#iint(self.height/2))
         elif self.id%2 == 0:
-            pygame.draw.circle(self.screen, self.lights[0].color, (int(self.x+self.lights[0].diameter+(self.width/4)+2),int(self.y-(self.width/2))), int(self.width/2))
-            pygame.draw.circle(self.screen, self.lights[1].color, (int(self.x+self.lights[1].diameter+(self.width/4)+2),int(self.y+(self.width/2))), int(self.width/2))
+            pygame.draw.circle(self.screen, self.lights[0].color, (int(self.x+self.lights[0].diameter),int(self.y-(self.width/2))), int(self.lights[0].diameter))#iint(self.width/2))
+            pygame.draw.circle(self.screen, self.lights[1].color, (int(self.x+self.lights[1].diameter),int(self.y+(self.width/2))), int(self.lights[0].diameter))#iint(self.width/2))
 
 
 class Light:
 
-    def __init__(self, name, state, diameter=3):
+    def __init__(self, name, state, diameter=5):
         self.name = name
         self.state = state
         self.diameter = diameter
-        self.radius = diameter/2
+        self.radius = diameter/2.0
         self.color = purple
-        self.isDrawable = True
+        self.isDrawable = False
+
 
         if self.state == "go":self.color = green
         elif self.state == "stop":self.color = red
@@ -183,9 +208,8 @@ class SpawnFrequencyIndex:
         self.spawnsPerMin = {}
         self.mods = {}
 
-    #sets the modulus values that will be used to spawn the vehicles
-    #a set number of times per minute
+    #sets the modulus values that will be used to spawn the vehicles a set number of times per minute
     def setMods(self):
         for key in self.spawnsPerMin.keys():
-            self.mods[key] = int(7200/self.spawnsPerMin[key])
+            self.mods[key] = int((FRAMERATE*60)/self.spawnsPerMin[key])
         

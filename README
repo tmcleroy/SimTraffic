@@ -1,0 +1,42 @@
+###################################
+##### FINAL SUBMISSION README #####
+###################################
+
+
+SimTraffic
+
+Tommy McLeroy
+
+Software Engineering 2
+
+St. Edward's University
+
+
+
+How to run:
+
+SimTraffic uses the pygame graphics library.  Unfortunately, pygame is unavailable as a redistributable and must be installed.  Two known working configurations are listed below.  After pygame is installed, run Main.py.  The program will launch, vehicles will begin spawning and the lights will automatically change state according to road conditions.  Statistics will be printed out in real time, statistical display can be toggled on and off with the 1 key.  Please note that average throughput and effectiveness metric statistics will not begin to display before 2 minutes into the simulation because sufficient data must be collected for these statistics to be accurate to actual road conditions over time.  The default road system that will be loaded is located at ROAD_SYSTEMS/road.txt.  One may edit this file to increase or decrease the vehicle spawn rate for each road by editing the numbers in the [SPAWN_FREQUENCIES] section.  The numbers correspond to the numbers of vehicles spawned per minute on the particular road.  While the road system files are intended to be user editable, it would not be wise to do so unless instructed on what exactly everything does.  While modifications of road length and vehicle spawn frequencies are encouraged, more advanced edits like adding and removing intersections are liable to break the program unless the user fully understands exactly what to modify.  Other modifications may be made to the global variables in the Config.py file if the user wishes to make any changes to light timing or importance weighting for vehicles on roads designated to be high traffic.  All files containing code are located in the root directory, all other files of importance are located in the descriptively named directories.
+
+
+
+Installing python and pygame:
+
+The following configurations will work, other configurations may work as well. OSX support is currently unavailable because there is not yet a python 3 compatible pygame release for OSX
+
+Windows:
+1. Install python 3.2 x86. 64 bit version will not work with pygame
+http://www.python.org/ftp/python/3.2/python-3.2.msi
+2. Install pygame 1.9.2a0
+http://pygame.org/ftp/pygame-1.9.2a0.win32-py3.2.msi
+3. Run Main.py
+
+
+Linux:
+1. Install dependencies
+sudo apt-get install python-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev libsdl1.2-dev libsmpeg-dev python-numpy subversion libportmidi-dev
+2. Download and install pygame
+svn co svn://seul.org/svn/pygame/trunk pygame
+cd pygame
+python setup.py build
+sudo python setup.py install
+3.Run Main.py

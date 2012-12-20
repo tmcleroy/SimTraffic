@@ -1,7 +1,0 @@
-TODO:
-
-implement turning
-
-lights positions on the poles don't scale properly
-
-Maybe move the draw functions from each individual object to the graphics part of main

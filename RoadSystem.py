@@ -2,6 +2,7 @@ import pygame
 from Config import *
 from RoadFeatures import *
 
+#this class handles the parsing and creationg of a RoadSystem from a data file
 class RoadSystem:
 
     roadGap = 0
@@ -13,6 +14,7 @@ class RoadSystem:
         self.features['None'] = None
         self.spawns = SpawnFrequencyIndex()
         self.navGraph = {}
+        self.entranceExitDefaults = {}
         self.f = open(fname, 'r')
         self.fstr = self.f.read()
         self.f.close()
@@ -35,6 +37,7 @@ class RoadSystem:
         self.setSideRoads()
         self.setIntersections()
         self.setNavGraph()
+        self.setEntranceExitDefaults()
 
 
 
@@ -62,7 +65,7 @@ class RoadSystem:
                 entrance = self.getEntranceInString(rdstr)
                 if '<' in rdstr: id = 2
                 elif '>'  in rdstr: id = 4
-                self.features["R"+str(i+1)] = Road("Road"+str(i+1), id, self.screen, [(0,((self.height/2)+(i*RoadSystem.roadGap))) , ((0+self.roadLen)*self.segmentSize, ((self.height/2)+(i*RoadSystem.roadGap)))], Lane(1), Lane(2))
+                self.features["R"+str(i+1)] = Road("Road"+str(i+1), id, self.screen, [(0,((self.height/2)+(i*RoadSystem.roadGap))) , ((0+self.roadLen)*self.segmentSize, ((self.height/2)+(i*RoadSystem.roadGap)))], Lane(1), Lane(2), self.segmentSize)
                 self.features[entrance].road = self.features["R"+str(i+1)]
 
 
@@ -109,15 +112,14 @@ class RoadSystem:
                         self.features[elem].x, self.features[elem].y = ((xCoord+(i*RoadSystem.roadGap)-(RoadSystem.roadGap/2)), ((self.height/2)-((roadLen/2)*self.segmentSize)+(j*self.segmentSize)+self.roadGap))
                         self.features[elem].width, self.features[elem].height = self.segmentSize, self.segmentSize
                         self.features[elem].id = id
-                    #********************************************************
                     elif 'Po' in elem:
                         if splt == '<':
-                            self.features[elem].x, self.features[elem].y = ((xCoord+(self.segmentSize/2)), ((self.height/2)-((i*RoadSystem.roadGap)*2)+self.roadGap*2)-self.segmentSize)
-                            self.features[elem].width, self.features[elem].height = self.segmentSize*2, self.segmentSize
+                            self.features[elem].x, self.features[elem].y = ((xCoord+(self.segmentSize/2))-self.segmentSize, ((self.height/2)-((i*RoadSystem.roadGap)*2)+self.roadGap*2)-self.segmentSize*3)
+                            self.features[elem].width, self.features[elem].height = self.segmentSize*4, self.segmentSize*2
                         elif splt == '>':
-                            self.features[elem].x, self.features[elem].y = ((xCoord+(self.segmentSize/2)-RoadSystem.roadGap), ((self.height/2)-((i*RoadSystem.roadGap)*2)+self.roadGap*2)+self.segmentSize)
-                            self.features[elem].width, self.features[elem].height = self.segmentSize*2, self.segmentSize
-                self.features["SR"+str(num+1)+str(i)] = Road("SideRoad"+str(num+1)+str(i), id, self.screen, [(xCoord+(i*RoadSystem.roadGap)-(RoadSystem.roadGap/2),yCoord-((roadLen/2)*self.segmentSize)) , (xCoord+(i*RoadSystem.roadGap)-(RoadSystem.roadGap/2), yCoord+((roadLen/2))*self.segmentSize)], Lane(1), Lane(2))
+                            self.features[elem].x, self.features[elem].y = ((xCoord+(self.segmentSize/2)-RoadSystem.roadGap)-self.segmentSize, ((self.height/2)-((i*RoadSystem.roadGap)*2)+self.roadGap*2)+self.segmentSize*3)
+                            self.features[elem].width, self.features[elem].height = self.segmentSize*4, self.segmentSize*2
+                self.features["SR"+str(num+1)+str(i)] = Road("SideRoad"+str(num+1)+str(i), id, self.screen, [(xCoord+(i*RoadSystem.roadGap)-(RoadSystem.roadGap/2),yCoord-((roadLen/2)*self.segmentSize)) , (xCoord+(i*RoadSystem.roadGap)-(RoadSystem.roadGap/2), yCoord+((roadLen/2))*self.segmentSize)], Lane(1), Lane(2), self.segmentSize)
                 self.features[entrance].road = self.features["SR"+str(num+1)+str(i)]
 
     def setAnchors(self):
@@ -146,6 +148,15 @@ class RoadSystem:
                         self.features[elem].width, self.features[elem].height = self.segmentSize, self.segmentSize
                         self.features[elem].id = 2 if splt == '<' else 4
 
+
+    def setEntranceExitDefaults(self):
+        argList = self.getStringBetween(self.fstr,'[ENTRANCE_EXIT_MAP]\n','\n[/ENTRANCE_EXIT_MAP]').split('\n')
+        for argstr in argList:
+            args = argstr.split(',')
+            self.entranceExitDefaults[args[0]] = [args[1]]
+       
+
+
     def setSpawnFrequencies(self):
         argList = self.getStringBetween(self.fstr,'[SPAWN_FREQUENCIES]\n','\n[/SPAWN_FREQUENCIES]').split('\n')
         for argstr in argList:
@@ -158,17 +169,17 @@ class RoadSystem:
         argList = self.getStringBetween(self.fstr,'[LIGHTPOLES]\n','\n[/LIGHTPOLES]').split('\n')
         for argstr in argList:
             args = argstr.split(',')
-            self.features[args[0]] = LightPole(args[0], args[1], self.screen, Light('l1', 'stop'), Light('l2', 'stop'))
+            self.features[args[0]] = LightPole(args[0], args[1], self.screen, Light('l1', 'stop', diameter=self.segmentSize), Light('l2', 'stop', diameter=self.segmentSize))
         for i, rdstr in enumerate(self.roadStrings):
             splt = '>' if '>' in rdstr else '<'
             for j, elem in enumerate(rdstr.split(splt)):
                 if 'Po' in elem:
                     if self.features[elem].id == 2:
-                        self.features[elem].x, self.features[elem].y = ((j*self.segmentSize)+(RoadSystem.roadGap*2)+self.segmentSize), ((self.height/2)+(i*RoadSystem.roadGap))
-                        self.features[elem].width, self.features[elem].height = self.segmentSize, self.segmentSize*2
+                        self.features[elem].x, self.features[elem].y = (((j*self.segmentSize)+self.segmentSize*2)+(RoadSystem.roadGap*2)+self.segmentSize), ((self.height/2)+(i*RoadSystem.roadGap))
+                        self.features[elem].width, self.features[elem].height = self.segmentSize*2, self.segmentSize*4
                     elif self.features[elem].id == 4:
-                        self.features[elem].x, self.features[elem].y = ((j*self.segmentSize)+self.segmentSize*2), ((self.height/2)+(i*RoadSystem.roadGap))
-                        self.features[elem].width, self.features[elem].height = self.segmentSize, self.segmentSize*2
+                        self.features[elem].x, self.features[elem].y = (((j*self.segmentSize)-self.segmentSize*2)+self.segmentSize*2), ((self.height/2)+(i*RoadSystem.roadGap))
+                        self.features[elem].width, self.features[elem].height = self.segmentSize*2, self.segmentSize*4
 
     def setIntersections(self):
         argList = self.getStringBetween(self.fstr,'[INTERSECTIONS]\n','\n[/INTERSECTIONS]').split('\n')
@@ -228,7 +239,11 @@ class RoadSystem:
     
     def draw(self):
         for feature in self.features.values():
-            if feature and feature.isDrawable: feature.draw()
+            if feature and feature.isDrawable and feature.layer == 0: feature.draw()
+        for feature in self.features.values():
+            if feature and feature.isDrawable and feature.layer == 1: feature.draw()
+        for feature in self.features.values():
+            if feature and feature.isDrawable and feature.layer == 2: feature.draw()
 
 
     #returns the shortest path from an entrance to an exit or intersection
@@ -254,6 +269,7 @@ class RoadSystem:
         return string.split(start)[1].split(end)[0]
         
 """
+#used for testing RoadSystem
 r = RoadSystem('roadSystems/r2.txt')
 print ("RoadSystem r has been created")
 """

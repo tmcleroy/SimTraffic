@@ -1,13 +1,10 @@
 import pygame, math, random
 from Config import *
 from RoadFeatures import *
-pygame.init()
+#pygame.init()
 
-
-roadWidth = 4
-laneWidth = 2
-poleWidth = 5
-poleHeight = 10
+#this class handles all the operations for a Vehicle
+#it is only so long because it essentially contains 4 different versions of the same code
 
 #should be 39 according to the equation describing 
 #how fast a vehicle stops...pixels to stop = 39 * speed
@@ -19,11 +16,9 @@ down = math.pi
 left = math.pi/2
 right = (3*math.pi)/2
 
+#speed variables
 baseSpeed = 0.001
-greenSpeed = 0.5
-yellowSpeed = 0.3
 vehicStop = None
-killDistance = 100
 
 class Vehicle:
 
@@ -36,14 +31,19 @@ class Vehicle:
         self.roadSystem = roadSystem
         self.path = self.roadSystem.getPath(entrance,exit)
         self.direction = "forward"
-        self.image = 'car.bmp'
+        self.image = VEHICLE_IMAGE_FILE_NAME
+        self.tripTime = 0.0
         self.ow = ow
+        self.importance = 1
+        self.setImportance()
         self.setNextDestAndLight()
 
         
         #randomize speeds
-        greenSpeed = random.uniform(0.2, 1.2)
-        yellowSpeed = random.uniform(0.1, 0.5)
+        #self.greenSpeed = ("%.2f" % round(random.uniform(0.2, 1.2),1))
+        #self.yellowSpeed = ("%.2f" % round(random.uniform(0.1, 0.5),1))
+        self.greenSpeed = (0.35) * VEHICLE_SPEED_MULTIPLIER
+        self.yellowSpeed = (0.20) * VEHICLE_SPEED_MULTIPLIER
         
 
         #these parameters control the physics of the car
@@ -62,7 +62,7 @@ class Vehicle:
             self.length,self.width = int(self.roadSystem.segmentSize/2),int(self.roadSystem.segmentSize)
             self.vehicSpace = self.width
             self.angle = down
-            self.poleStop = self.pole.y-(self.roadSystem.roadGap*2)-(2*self.width)
+            self.poleStop = self.pole.y-(self.roadSystem.roadGap*4)
             rawImg = pygame.image.load(self.image)
             self.image = pygame.transform.smoothscale(rawImg,(self.length,self.width))
             self.rect = self.image.get_rect()
@@ -72,7 +72,7 @@ class Vehicle:
             self.length,self.width = int(self.roadSystem.segmentSize),int(self.roadSystem.segmentSize/2)
             self.vehicSpace = self.length/2
             self.angle = left
-            self.poleStop = self.pole.x+(self.roadSystem.roadGap*1.2)+self.length
+            self.poleStop = self.pole.x+(self.roadSystem.roadGap*3)
             rawImg = pygame.transform.rotate(pygame.image.load(self.image),270)
             self.image = pygame.transform.smoothscale(rawImg,(self.length,self.width))
             self.rect = self.image.get_rect()
@@ -82,7 +82,7 @@ class Vehicle:
             self.length,self.width = int(self.roadSystem.segmentSize/2),int(self.roadSystem.segmentSize)
             self.vehicSpace = self.width
             self.angle = up
-            self.poleStop = self.pole.y+(self.roadSystem.roadGap*2)+(self.width)
+            self.poleStop = self.pole.y+(self.roadSystem.roadGap*4)
             rawImg = pygame.transform.flip(pygame.image.load(self.image), False, True)
             self.image = pygame.transform.smoothscale(rawImg,(self.length,self.width))
             self.rect = self.image.get_rect()
@@ -92,7 +92,7 @@ class Vehicle:
             self.length,self.width = int(self.roadSystem.segmentSize),int(self.roadSystem.segmentSize/2)
             self.vehicSpace = self.length
             self.angle = right
-            self.poleStop = self.pole.x-(self.roadSystem.roadGap*1.2)-self.length
+            self.poleStop = self.pole.x-(self.roadSystem.roadGap*3)
             rawImg = pygame.transform.rotate(pygame.image.load(self.image),90)
             self.image = pygame.transform.smoothscale(rawImg,(self.length,self.width))
             self.rect = self.image.get_rect()
@@ -103,7 +103,9 @@ class Vehicle:
         
     #this is the decision making method that asks questions of the other methods
     #and decides to move forward, brake, or remove itself from the vehicle list
+    #this method is called once per frame
     def auto(self):
+        self.tripTime += 1
         #get a new pole and light if we pass the current one
         if self.isPastLine() and len(self.path) >= 2:
             #remove the vehicle from the current poles list because it has passed it
@@ -112,8 +114,14 @@ class Vehicle:
             x = self.path.pop(0)
             #set the vehicles next destination
             self.setNextDestAndLight(andPoleStop=True)
+            #decrement importance because the more poles the vehicle passes, the more reasonable 
+            #it is that it should be expected to stop soon
+            self.importance -= 1
+            if self.importance <= 0 : self.importance = 1
         elif self.isPastLine() and len(self.path) <= 1:
             #delete this instance of vehicle so that it will be garbage collected
+            #and convert trip time to seconds
+            self.tripTime /= FRAMERATE
             self.ow.removeVehic(self)
             
         #remove a vehicle from the nextVehic slot if it has been garbage collected
@@ -132,6 +140,17 @@ class Vehicle:
         #pygame.draw.rect(screen, self.color, (self.x,self.y,self.width,self.length))
         self.rect.x, self.rect.y = self.x, self.y
         self.screen.blit(self.image, self.rect)
+        
+
+    #sets the intitial importance value for the vehicle
+    def setImportance(self):
+        if self.isHighTraffic() : self.importance = 1*HT_TIMING_WEIGHT
+        else : self.importance = 1
+        
+
+    #determines whether or not the vehicle belongs to a high traffic road
+    def isHighTraffic(self):
+        return self.road.id in HT_ROADS
 
         
 
@@ -169,6 +188,14 @@ class Vehicle:
         elif self.road.id==3:return self.y < self.poleStop
         elif self.road.id==4:return self.x > self.poleStop
 
+        #this method determines whether or not the vehicle is in the yellow zone
+        #the yellow zone is the distance in front of the light where you must slow down
+    def isInYellowZone(self):
+        if not self.isPastLine():
+            if   self.road.id==1:return self.y > self.poleStop-(self.width*10)
+            elif self.road.id==2:return self.x < self.poleStop+(self.length*10)
+            elif self.road.id==3:return self.y < self.poleStop+(self.width*10)
+            elif self.road.id==4:return self.x > self.poleStop-(self.length*10)
 
 
     #this method determines whether or not a vehicle can accelerate
@@ -179,7 +206,8 @@ class Vehicle:
         if not self.nextVehic and isinstance(self.pole, Exit) : return True
         if self.road.id == 1:
             if self.light.state == "stop":
-                self.maxSpeed = greenSpeed
+                if not self.isInYellowZone() : self.maxSpeed = self.greenSpeed
+                else: self.maxSpeed = self.yellowSpeed
                 #the car may go if it has already passed the line
                 #this avoids collisions in the middle of the intersection
                 if self.isPastLine(): return True
@@ -196,7 +224,7 @@ class Vehicle:
                         return True
                 return False
             elif self.light.state == "go":
-                self.maxSpeed = greenSpeed
+                self.maxSpeed = self.greenSpeed
                 if self.isPastLine(): return True
                 if self.nextVehic:
                     vehicStop = self.nextVehic.y-self.length-self.vehicSpace
@@ -208,8 +236,8 @@ class Vehicle:
                     return True
                 return False
             elif self.light.state == "slow":
-                if self.isPastLine(): self.maxSpeed = greenSpeed
-                else: self.maxSpeed = yellowSpeed
+                if not self.isInYellowZone() : self.maxSpeed = self.greenSpeed
+                else: self.maxSpeed = self.yellowSpeed
                 if self.isPastLine(): return True
                 if self.nextVehic:
                     vehicStop = self.nextVehic.y-self.length-self.vehicSpace
@@ -223,7 +251,8 @@ class Vehicle:
             
         elif self.road.id == 2:
             if self.light.state == "stop":
-                self.maxSpeed = greenSpeed
+                if not self.isInYellowZone() : self.maxSpeed = self.greenSpeed
+                else: self.maxSpeed = self.yellowSpeed
                 #the car may go if it has already passed the line
                 #this avoids collisions in the middle of the intersection
                 if self.isPastLine(): return True
@@ -239,7 +268,7 @@ class Vehicle:
                     if (abs(self.poleStop-self.x)) >= (eq*self.speed):
                         return True
             elif self.light.state == "go":
-                self.maxSpeed = greenSpeed
+                self.maxSpeed = self.greenSpeed
                 if self.isPastLine(): return True
                 if self.nextVehic:
                     vehicStop = self.nextVehic.x+self.width+self.vehicSpace
@@ -250,9 +279,9 @@ class Vehicle:
                 elif not self.nextVehic:
                     return True
             elif self.light.state == "slow":
-                if self.isPastLine(): self.maxSpeed = greenSpeed
-                else: self.maxSpeed = yellowSpeed
-                if self.isPastLine(): return True
+                if not self.isInYellowZone() : self.maxSpeed = self.greenSpeed
+                else: self.maxSpeed = self.yellowSpeed
+                if self.isPastLine() : return True
                 if self.nextVehic:
                     vehicStop = self.nextVehic.x+self.width+self.vehicSpace
                     #check if I have enough room to stop if I need to
@@ -264,7 +293,8 @@ class Vehicle:
                 
         elif self.road.id == 3:
             if self.light.state == "stop":
-                self.maxSpeed = greenSpeed
+                if not self.isInYellowZone() : self.maxSpeed = self.greenSpeed
+                else: self.maxSpeed = self.yellowSpeed
                 #the car may go if it has already passed the line
                 #this avoids collisions in the middle of the intersection
                 if self.isPastLine(): return True
@@ -280,7 +310,7 @@ class Vehicle:
                     if (abs(self.poleStop-self.y)) >= (eq*self.speed):
                         return True
             elif self.light.state == "go":
-                self.maxSpeed = greenSpeed
+                self.maxSpeed = self.greenSpeed
                 if self.isPastLine(): return True
                 if self.nextVehic:
                     vehicStop = self.nextVehic.y+self.length+self.vehicSpace
@@ -291,9 +321,9 @@ class Vehicle:
                 elif not self.nextVehic:
                     return True
             elif self.light.state == "slow":
-                if self.isPastLine(): self.maxSpeed = greenSpeed
-                else: self.maxSpeed = yellowSpeed
-                if self.isPastLine(): return True
+                if not self.isInYellowZone() : self.maxSpeed = self.greenSpeed
+                else: self.maxSpeed = self.yellowSpeed
+                if self.isPastLine() : return True
                 if self.nextVehic:
                     vehicStop = self.nextVehic.y+self.length+self.vehicSpace
                     #check if I have enough room to stop if I need to
@@ -305,7 +335,8 @@ class Vehicle:
                 
         elif self.road.id == 4:
             if self.light.state == "stop":
-                self.maxSpeed = greenSpeed
+                if not self.isInYellowZone() : self.maxSpeed = self.greenSpeed
+                else: self.maxSpeed = self.yellowSpeed
                 #the car may go if it has already passed the line
                 #this avoids collisions in the middle of the intersection
                 if self.isPastLine(): return True
@@ -321,7 +352,7 @@ class Vehicle:
                     if (abs(self.poleStop-self.x)) >= (eq*self.speed):
                         return True
             elif self.light.state == "go":
-                self.maxSpeed = greenSpeed
+                self.maxSpeed = self.greenSpeed
                 if self.isPastLine(): return True
                 if self.nextVehic:
                     vehicStop = self.nextVehic.x-self.width-self.vehicSpace
@@ -332,9 +363,9 @@ class Vehicle:
                 elif not self.nextVehic:
                     return True
             elif self.light.state == "slow":
-                if self.isPastLine(): self.maxSpeed = greenSpeed
-                else: self.maxSpeed = yellowSpeed
-                if self.isPastLine(): return True
+                if not self.isInYellowZone() : self.maxSpeed = self.greenSpeed
+                else: self.maxSpeed = self.yellowSpeed
+                if self.isPastLine() : return True
                 if self.nextVehic:
                     vehicStop = self.nextVehic.x-self.width-self.vehicSpace
                     #check if I have enough room to stop if I need to
@@ -354,10 +385,10 @@ class Vehicle:
                 #add the vehicle to the new poles list
                 if not self in self.pole.vehics: self.pole.vehics.append(self)
                 if andPoleStop:
-                    if self.road.id==1 : self.poleStop = self.pole.y-(self.roadSystem.roadGap*2)-(2*self.width)
-                    elif self.road.id==2 : self.poleStop = self.pole.x+(self.roadSystem.roadGap*1.2)+self.length
-                    elif self.road.id==3 : self.poleStop = self.pole.y+(self.roadSystem.roadGap*2)+(self.width)
-                    elif self.road.id==4 : self.poleStop = self.pole.x-(self.roadSystem.roadGap*1.2)-self.length
+                    if self.road.id==1 : self.poleStop = self.pole.y-(self.roadSystem.roadGap*4)
+                    elif self.road.id==2 : self.poleStop = self.pole.x+(self.roadSystem.roadGap*3)
+                    elif self.road.id==3 : self.poleStop = self.pole.y+(self.roadSystem.roadGap*4)
+                    elif self.road.id==4 : self.poleStop = self.pole.x-(self.roadSystem.roadGap*3)
                 break
                 
             elif isinstance(elem, Exit):
@@ -370,7 +401,7 @@ class Vehicle:
                 break
             
             
-
+    #incomplete, not yet implemented
     def turn(self, id):
         #road specific assignments
         if id==1:

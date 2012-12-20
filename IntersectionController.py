@@ -1,105 +1,111 @@
 import time
 from threading import Thread
+from Config import *
 
+#this class controls the lights in one particular intersection
+#it essentially sets the states of its lights governing its odd or even
+#roads depending on which type of road has the greatest vehicle weight
+#(not physical weight but scoring weight)
 class IntersectionController(Thread):
 
-    def __init__(self, intersection, timing):
+    def __init__(self, intersection, mode):
         self.intersection = intersection
         self.poles = self.intersection.poles
-        self.timing = timing
+        self.mode = mode
         self.curr_flow = None
+        self.yt = YELLOW_TIME
+        self.gt = MIN_GREEN_TIME
+        self.ip = INACTIVITY_PAUSE
         Thread.__init__(self)
 
-	#this method runs automatically when start() is called on an instance of this class
+	#this method runs automatically when start() is called on an instance of this class (becuase it's a Thread)
+    #it essentially allows odd roads or even roads to flow depending on which has more vehicle weight
     def run(self):
         	        
-        numOdd = len(self.poles[0].vehics)+len(self.poles[2].vehics)
-        numEven = len(self.poles[1].vehics)+len(self.poles[3].vehics)
+        run = True
+        while run == True:
+            numOdd = self.getWeightedNums([0,2])
+            numEven = self.getWeightedNums([1,3])
 
-        if self.timing == 'independent':
-            if numOdd > numEven and self.curr_flow == 'even':
-                self.flow('odd')
-                time.sleep(5)
-            elif numEven > numOdd and self.curr_flow == 'odd':
-                self.flow('even')
-                time.sleep(5)
-            elif numEven == numOdd and not self.curr_flow == 'even':
-                self.flow('even')
-                time.sleep(5)
-            else: 
-                time.sleep(5)
+            if self.mode == 'independent':
+                if numOdd > (numEven) and self.curr_flow == 'even':
+                    self.flow('odd')
+                    #print ('waiting for green time: ', self.gt)
+                    time.sleep(self.gt)
+                elif (numEven) > numOdd and (self.curr_flow == 'odd' or self.curr_flow == None):
+                    self.flow('even')
+                    #print ('waiting for green time: ', self.gt)
+                    time.sleep(self.gt)
+                elif (numEven) == numOdd and not self.curr_flow == 'even':
+                    self.flow('even')
+                    #print ('waiting for green time: ', self.gt)
+                    time.sleep(self.gt)
+                else:
+                    #print ('pausing for inactivity pause: ', self.ip) 
+                    time.sleep(self.ip)
     
-            self.run()
 
 
-        
+    #returns the weighted equivalent of the number of vehicles on the roads defined by the given indices
+    def getWeightedNums(self, indices):
+        ret = 0
+        for i in indices:
+            for vehic in self.poles[i].vehics:
+                ret += vehic.importance
+        return ret
 
-    def wait(self, seconds):
-        time.sleep(seconds)
-        """
-        t = threading.Thread(target=self.auto)
-        t.start()
-        """
 
-    #sets the state of all lights in the intersection after a set amount of time
-    #sleep is the number of seconds to wait before setting the lights
-    def setAllLights(self, state, sleep=0):
-        if sleep: self.wait(sleep)
+    #adds the given amount of importance to the vehicles on the roads defined by the given indices
+    def setNewImportances(self, indices, amount):
+        for i in indices:
+            for vehic in self.poles[i].vehics:
+                vehic.importance += amount
+                if vehic.importance <= 0 : vehic.importance = 1
+
+
+    #sets the state of all lights in the intersection
+    def setAllLights(self, state):
         for pole in self.poles:
             for light in pole.lights:
                 light.setState(state)
 
         
-    #sets the states of specific lights in the intersection after a set amount of time
+    #sets the states of given states
     #lights is a list containing the indices of the lights that will be set
-    #sleep is the number of seconds to wait before setting the lights
-    def setLights(self, lights, state, sleep=0):
-        if sleep: time.sleep(sleep)
+    def setLights(self, lights, state):
         for i in range(len(self.poles)):
             if i in lights:
                 for light in self.poles[i].lights:
                     light.setState(state)
 
+
+
+    #used for updating light timing variables as dictated by the learning module
+    def setTimingVars(self, yellowTime, minGreenTime, inactivityPause):
+        self.yt = yellowTime
+        self.gt = minGreenTime
+        self.ip = inactivityPause
+
                     
 
-    def transToState(self, lights, state):
-        if state == 'go':
-            self.setLights(lights, 'go')
-            return
-        elif state == 'stop':
-            t = Thread(target=self.setLights, args=(lights, state, 3))
-            t.start()
-            self.setLights(lights, 'slow')
-
-
+    #flows either even or odd lanes safely by properly adjusting light states to avoid collisions
     def flow(self, dir='none'):
         if dir == 'even':
+            self.setNewImportances([1,3],2)
             self.setLights([0,2], 'slow')
-            time.sleep(3)
+            #print ('waiting for yellow time: ', self.yt)
+            time.sleep(self.yt)
             self.setLights([0,2], 'stop')
             time.sleep(1)
             self.setLights([1,3], 'go')
             self.curr_flow = 'even'
-            
-            """
-            self.transToState([0,2], 'stop')
-            self.transToState([1,3], 'go')
-            self.curr_flow = 'even'
-            #time.sleep(3)
-            #self.run()
-            """
-        if dir == 'odd':
+
+        elif dir == 'odd':
             self.setLights([1,3], 'slow')
-            time.sleep(3)
+            #print ('waiting for yellow time: ', self.yt)
+            time.sleep(self.yt)
             self.setLights([1,3], 'stop')
             time.sleep(1)
             self.setLights([0,2], 'go')
             self.curr_flow = 'odd'         
-            
-            """
-            self.transToState([0,2], 'go')
-            self.transToState([1,3], 'stop')
-            self.curr_flow = 'odd'
-            #time.sleep(3)
-            #self.run()
-            """
+
